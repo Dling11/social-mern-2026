@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios'
 import { apiClient } from '@/services/api-client'
-import type { AdminPostRow, AdminStats, AdminUserRow } from '@/types/admin'
+import type { AdminPostRow, AdminStats, AdminUserRow, ResetAdminUserPasswordPayload } from '@/types/admin'
 import type { ApiErrorResponse } from '@/types/http'
 
 export const adminService = {
@@ -19,6 +19,12 @@ export const adminService = {
   async updateUserRole(userId: string, role: 'user' | 'admin'): Promise<AdminUserRow> {
     const { data } = await apiClient.patch<{ user: AdminUserRow }>(`/admin/users/${userId}/role`, { role })
     return data.user
+  },
+  async resetUserPassword({ userId, password }: ResetAdminUserPasswordPayload) {
+    await apiClient.patch(`/admin/users/${userId}/password`, { password })
+  },
+  async deleteUser(userId: string) {
+    await apiClient.delete(`/admin/users/${userId}`)
   },
   async deletePost(postId: string) {
     await apiClient.delete(`/admin/posts/${postId}`)

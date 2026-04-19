@@ -8,6 +8,7 @@ export interface AdminStats {
 export interface AdminUserRow {
   id: string
   name: string
+  username?: string | null
   email: string
   role: 'user' | 'admin'
   postCount: number
@@ -24,4 +25,9 @@ export interface AdminPostRow {
   likeCount: number
   commentCount: number
   createdAt: string
+}
+
+export interface ResetAdminUserPasswordPayload {
+  userId: string
+  password: string
 }

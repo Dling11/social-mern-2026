@@ -20,6 +20,11 @@ interface LoginPayload {
   password: string
 }
 
+interface ChangePasswordPayload {
+  currentPassword: string
+  newPassword: string
+}
+
 export const authService = {
   async register(payload: RegisterPayload) {
     const normalizedEmail = payload.email.toLowerCase()
@@ -71,6 +76,26 @@ export const authService = {
       user: mapUser(user),
       token: createToken(user.id),
     }
+  },
+
+  async changePassword(userId: string, payload: ChangePasswordPayload) {
+    const user = await UserModel.findById(userId).select('+password')
+    if (!user) {
+      throw new ApiError(404, 'User not found.')
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(payload.currentPassword, user.password)
+    if (!isCurrentPasswordValid) {
+      throw new ApiError(400, 'Current password is incorrect.')
+    }
+
+    const isSamePassword = await bcrypt.compare(payload.newPassword, user.password)
+    if (isSamePassword) {
+      throw new ApiError(400, 'Choose a new password different from your current one.')
+    }
+
+    user.password = await bcrypt.hash(payload.newPassword, 12)
+    await user.save()
   },
 
   async getUserFromToken(token: string) {

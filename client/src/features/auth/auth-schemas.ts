@@ -24,5 +24,21 @@ export const registerSchema = z
     message: 'Passwords do not match.',
   })
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(6, 'Current password must be at least 6 characters.'),
+    newPassword: z.string().min(6, 'New password must be at least 6 characters.'),
+    confirmNewPassword: z.string().min(6, 'Please confirm your new password.'),
+  })
+  .refine((values) => values.newPassword === values.confirmNewPassword, {
+    path: ['confirmNewPassword'],
+    message: 'Passwords do not match.',
+  })
+  .refine((values) => values.currentPassword !== values.newPassword, {
+    path: ['newPassword'],
+    message: 'New password must be different from your current password.',
+  })
+
 export type LoginFormValues = z.infer<typeof loginSchema>
 export type RegisterFormValues = z.infer<typeof registerSchema>
+export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>

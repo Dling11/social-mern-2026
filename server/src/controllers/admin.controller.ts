@@ -6,6 +6,10 @@ const updateRoleSchema = z.object({
   role: z.enum(['user', 'admin']),
 })
 
+const resetPasswordSchema = z.object({
+  password: z.string().min(6),
+})
+
 export const adminController = {
   async getStats(_request: Request, response: Response) {
     const stats = await adminService.getStats()
@@ -30,6 +34,17 @@ export const adminController = {
 
   async deletePost(request: Request, response: Response) {
     const result = await adminService.deletePost(String(request.params.postId))
+    response.status(200).json(result)
+  },
+
+  async deleteUser(request: Request, response: Response) {
+    const result = await adminService.deleteUser(String(request.params.userId))
+    response.status(200).json(result)
+  },
+
+  async resetUserPassword(request: Request, response: Response) {
+    const payload = resetPasswordSchema.parse(request.body)
+    const result = await adminService.resetUserPassword(String(request.params.userId), payload.password)
     response.status(200).json(result)
   },
 }

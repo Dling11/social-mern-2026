@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { z } from 'zod'
 import { authService } from '../services/auth.service'
+import { ApiError } from '../utils/api-error'
 
 const registerSchema = z.object({
   firstName: z.string().trim().min(2).max(30),
@@ -14,6 +15,11 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   identifier: z.string().trim().min(3),
   password: z.string().min(6),
+})
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(6),
+  newPassword: z.string().min(6),
 })
 
 export const authController = {
@@ -35,6 +41,16 @@ export const authController = {
 
   async me(request: Request, response: Response) {
     response.status(200).json({ user: request.user })
+  },
+
+  async changePassword(request: Request, response: Response) {
+    const payload = changePasswordSchema.parse(request.body)
+    if (!request.user) {
+      throw new ApiError(401, 'Authentication required.')
+    }
+
+    await authService.changePassword(request.user.id, payload)
+    response.status(200).json({ message: 'Password updated successfully.' })
   },
 
   async logout(_request: Request, response: Response) {

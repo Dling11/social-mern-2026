@@ -33,7 +33,7 @@ export function LoginPage() {
   const onSubmit = handleSubmit(async (values) => {
     const result = await dispatch(login(values))
     if (login.fulfilled.match(result)) {
-      navigate('/feed')
+      navigate(result.payload.role === 'admin' ? '/admin' : '/feed')
     }
   })
 

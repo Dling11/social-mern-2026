@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios'
 import { apiClient } from '@/services/api-client'
-import type { AuthResponse, AuthUser, LoginPayload, RegisterPayload } from '@/types/auth'
+import type { AuthResponse, AuthUser, ChangePasswordPayload, LoginPayload, RegisterPayload } from '@/types/auth'
 import type { ApiErrorResponse } from '@/types/http'
 
 const AUTH_BASE = '/auth'
@@ -20,6 +20,10 @@ export const authService = {
   async getCurrentUser(): Promise<AuthUser> {
     const { data } = await apiClient.get<AuthResponse>(`${AUTH_BASE}/me`)
     return data.user
+  },
+  async changePassword(payload: ChangePasswordPayload): Promise<string> {
+    const { data } = await apiClient.post<{ message: string }>(`${AUTH_BASE}/change-password`, payload)
+    return data.message
   },
   getErrorMessage(error: unknown): string {
     const axiosError = error as AxiosError<ApiErrorResponse>

@@ -28,3 +28,8 @@ export interface RegisterPayload {
   email: string
   password: string
 }
+
+export interface ChangePasswordPayload {
+  currentPassword: string
+  newPassword: string
+}

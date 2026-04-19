@@ -61,6 +61,27 @@ export const deleteAdminPost = createAsyncThunk('admin/deletePost', async (postI
   }
 })
 
+export const deleteAdminUser = createAsyncThunk('admin/deleteUser', async (userId: string, { rejectWithValue }) => {
+  try {
+    await adminService.deleteUser(userId)
+    return userId
+  } catch (error) {
+    return rejectWithValue(adminService.getErrorMessage(error))
+  }
+})
+
+export const resetAdminUserPassword = createAsyncThunk(
+  'admin/resetUserPassword',
+  async (payload: { userId: string; password: string }, { rejectWithValue }) => {
+    try {
+      await adminService.resetUserPassword(payload)
+      return payload.userId
+    } catch (error) {
+      return rejectWithValue(adminService.getErrorMessage(error))
+    }
+  },
+)
+
 const adminSlice = createSlice({
   name: 'admin',
   initialState,
@@ -80,9 +101,28 @@ const adminSlice = createSlice({
         state.users = state.users.map((user) => (user.id === action.payload.id ? action.payload : user))
         toast.success('User role updated.')
       })
+      .addCase(updateAdminUserRole.rejected, (_state, action) => {
+        toast.error((action.payload as string) ?? 'Unable to update the role.')
+      })
+      .addCase(deleteAdminUser.fulfilled, (state, action) => {
+        state.users = state.users.filter((user) => user.id !== action.payload)
+        toast.success('User deleted.')
+      })
+      .addCase(deleteAdminUser.rejected, (_state, action) => {
+        toast.error((action.payload as string) ?? 'Unable to delete user.')
+      })
       .addCase(deleteAdminPost.fulfilled, (state, action) => {
         state.posts = state.posts.filter((post) => post.id !== action.payload)
         toast.success('Post deleted.')
+      })
+      .addCase(deleteAdminPost.rejected, (_state, action) => {
+        toast.error((action.payload as string) ?? 'Unable to delete post.')
+      })
+      .addCase(resetAdminUserPassword.fulfilled, () => {
+        toast.success('Password updated for this user.')
+      })
+      .addCase(resetAdminUserPassword.rejected, (_state, action) => {
+        toast.error((action.payload as string) ?? 'Unable to reset the password.')
       })
   },
 })
