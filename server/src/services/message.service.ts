@@ -174,6 +174,7 @@ function mapUser(user: any): AuthenticatedUser {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: user.role ?? 'user',
     avatarUrl: user.avatarUrl ?? null,
   }
 }

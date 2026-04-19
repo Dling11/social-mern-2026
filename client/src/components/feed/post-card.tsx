@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { MessageCircle, Send, ThumbsUp } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { Link } from 'react-router-dom'
+import { Avatar } from '@/components/shared/avatar'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { addCommentSchema, type AddCommentValues } from '@/features/feed/feed-schemas'
@@ -33,9 +35,16 @@ export function PostCard({ post }: { post: FeedPost }) {
   return (
     <Card className="space-y-5">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="font-semibold text-foreground">{post.author.name}</p>
-          <p className="text-sm text-muted-foreground">{formatRelativeDate(post.createdAt)}</p>
+        <div className="flex items-center gap-3">
+          <Link to={`/profile/${post.author.id}`}>
+            <Avatar name={post.author.name} src={post.author.avatarUrl} className="h-12 w-12 transition hover:scale-[1.03]" />
+          </Link>
+          <div>
+            <Link to={`/profile/${post.author.id}`} className="font-semibold text-foreground transition hover:text-primary">
+              {post.author.name}
+            </Link>
+            <p className="text-sm text-muted-foreground">{formatRelativeDate(post.createdAt)}</p>
+          </div>
         </div>
         <div className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
           {post.author.email}
@@ -53,6 +62,7 @@ export function PostCard({ post }: { post: FeedPost }) {
         <Button
           variant={post.isLiked ? 'default' : 'secondary'}
           size="sm"
+          className="cursor-pointer transition hover:scale-[1.02]"
           onClick={() => void dispatch(togglePostLike(post.id))}
         >
           <ThumbsUp className="h-4 w-4" />
@@ -88,7 +98,7 @@ export function PostCard({ post }: { post: FeedPost }) {
             className="h-11 flex-1 rounded-2xl border border-input bg-background px-4 text-sm text-foreground outline-none transition focus:ring-2 focus:ring-ring"
             placeholder="Write a comment..."
           />
-          <Button type="submit" size="icon" disabled={isSubmitting}>
+          <Button type="submit" size="icon" disabled={isSubmitting} className="cursor-pointer">
             <Send className="h-4 w-4" />
           </Button>
         </div>

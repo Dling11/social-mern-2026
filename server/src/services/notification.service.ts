@@ -30,7 +30,7 @@ export const notificationService = {
       isRead: false,
     })
 
-    const populated = await NotificationModel.findById(notification._id).populate('actor', 'name email avatarUrl')
+    const populated = await NotificationModel.findById(notification._id).populate('actor', 'name email avatarUrl role')
     if (!populated) {
       return null
     }
@@ -66,6 +66,7 @@ function mapNotification(notification: any): AppNotification {
       id: notification.actor.id,
       name: notification.actor.name,
       email: notification.actor.email,
+      role: notification.actor.role ?? 'user',
       avatarUrl: notification.actor.avatarUrl ?? null,
     },
     type: notification.type,

@@ -4,6 +4,7 @@ export interface UserDocument {
   name: string
   email: string
   password: string
+  role: 'user' | 'admin'
   avatarUrl?: string | null
   avatarPublicId?: string | null
   coverUrl?: string | null
@@ -11,6 +12,8 @@ export interface UserDocument {
   friends: Types.ObjectId[]
   sentFriendRequests: Types.ObjectId[]
   receivedFriendRequests: Types.ObjectId[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -34,6 +37,11 @@ const userSchema = new Schema<UserDocument>(
       required: true,
       minlength: 6,
       select: false,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
     },
     avatarUrl: {
       type: String,

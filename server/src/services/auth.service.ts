@@ -25,10 +25,12 @@ export const authService = {
     }
 
     const hashedPassword = await bcrypt.hash(payload.password, 12)
+    const normalizedEmail = payload.email.toLowerCase()
     const user = await UserModel.create({
       ...payload,
-      email: payload.email.toLowerCase(),
+      email: normalizedEmail,
       password: hashedPassword,
+      role: env.ADMIN_EMAIL_LIST.includes(normalizedEmail) ? 'admin' : 'user',
     })
 
     return {
@@ -92,11 +94,12 @@ function createToken(userId: string) {
   })
 }
 
-function mapUser(user: { id: string; name: string; email: string; avatarUrl?: string | null }): AuthenticatedUser {
+function mapUser(user: { id: string; name: string; email: string; role: 'user' | 'admin'; avatarUrl?: string | null }): AuthenticatedUser {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: user.role,
     avatarUrl: user.avatarUrl ?? null,
   }
 }

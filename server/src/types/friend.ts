@@ -1,8 +1,12 @@
-import type { AuthenticatedUser } from './user'
-
 export type FriendshipStatus = 'self' | 'friends' | 'incoming_request' | 'outgoing_request' | 'none'
 
-export interface FriendSummary extends AuthenticatedUser {}
+export interface FriendSummary {
+  id: string
+  name: string
+  email: string
+  role: 'user' | 'admin'
+  avatarUrl?: string | null
+}
 
 export interface FriendListResponse {
   friends: FriendSummary[]

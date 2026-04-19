@@ -1,7 +1,8 @@
 import { Bell, Home, MessageCircle, Search, UserCircle2, Users } from 'lucide-react'
-import { useEffect } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { NotificationPanel } from '@/components/notifications/notification-panel'
+import { Avatar } from '@/components/shared/avatar'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -16,16 +17,18 @@ import { cn } from '@/utils/cn'
 const navItems = [
   { label: 'Feed', icon: Home, to: '/feed' },
   { label: 'Profile', icon: UserCircle2, to: '/profile' },
-  { label: 'Friends', icon: Users, to: '/feed' },
+  { label: 'Friends', icon: Users, to: '/friends' },
   { label: 'Messages', icon: MessageCircle, to: '/messages' },
-  { label: 'Notifications', icon: Bell, to: '/feed' },
+  { label: 'Notifications', icon: Bell, to: '/notifications' },
 ]
 
 export function MainLayout() {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const user = useAppSelector((state) => state.auth.user)
   const { friends, receivedRequests } = useAppSelector((state) => state.friend)
   const unreadCount = useAppSelector((state) => state.notification.items.filter((item) => !item.isRead).length)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     void dispatch(fetchFriendLists())
@@ -54,18 +57,35 @@ export function MainLayout() {
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-3">
-            <div className="hidden min-w-72 items-center gap-2 rounded-full border border-border bg-background px-4 py-2 md:flex">
+            <form
+              className="hidden min-w-72 items-center gap-2 rounded-full border border-border bg-background px-4 py-2 md:flex"
+              onSubmit={(event) => {
+                event.preventDefault()
+                if (searchQuery.trim()) {
+                  navigate(`/discover?q=${encodeURIComponent(searchQuery.trim())}`)
+                }
+              }}
+            >
               <Search className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Search people, posts, and communities</span>
-            </div>
-            <div className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-background text-foreground">
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                placeholder="Search people and profiles"
+              />
+            </form>
+            <button
+              type="button"
+              onClick={() => navigate('/notifications')}
+              className="relative grid h-10 w-10 cursor-pointer place-items-center rounded-full border border-border bg-background text-foreground transition hover:bg-accent"
+            >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 ? (
                 <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-center text-[10px] font-semibold text-primary-foreground">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               ) : null}
-            </div>
+            </button>
             <ThemeToggle />
             <Button variant="outline" onClick={() => void dispatch(logout())}>
               Logout
@@ -75,10 +95,15 @@ export function MainLayout() {
 
         <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)_320px]">
           <Card className="h-fit space-y-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Signed in as</p>
-              <h2 className="mt-1 text-xl font-semibold text-foreground">{user?.name}</h2>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <div className="rounded-[24px] bg-[linear-gradient(135deg,rgba(59,130,246,0.12),rgba(16,185,129,0.08))] p-4">
+              <div className="flex items-center gap-3">
+                <Avatar name={user?.name ?? 'You'} src={user?.avatarUrl} className="h-14 w-14" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Signed in as</p>
+                  <h2 className="mt-1 text-xl font-semibold text-foreground">{user?.name}</h2>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                </div>
+              </div>
             </div>
 
             <nav className="space-y-2">
@@ -110,11 +135,16 @@ export function MainLayout() {
               <div className="mt-4 space-y-4">
                 {friends.slice(0, 3).map((friend) => (
                   <div key={friend.id} className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-foreground">{friend.name}</p>
-                      <p className="text-sm text-muted-foreground">{friend.email}</p>
+                    <div className="flex items-center gap-3">
+                      <Avatar name={friend.name} src={friend.avatarUrl} className="h-11 w-11" />
+                      <div>
+                        <p className="font-medium text-foreground">{friend.name}</p>
+                        <p className="text-sm text-muted-foreground">{friend.email}</p>
+                      </div>
                     </div>
-                    <Button size="sm" variant="secondary">Friend</Button>
+                    <Button size="sm" variant="secondary" onClick={() => navigate(`/profile/${friend.id}`)}>
+                      View
+                    </Button>
                   </div>
                 ))}
                 {friends.length === 0 ? <p className="text-sm text-muted-foreground">No friends connected yet.</p> : null}
@@ -125,10 +155,10 @@ export function MainLayout() {
               <p className="text-sm font-semibold text-foreground">Requests</p>
               <div className="mt-4 space-y-3">
                 {receivedRequests.slice(0, 4).map((request) => (
-                  <div key={request.id}>
+                  <button key={request.id} className="w-full text-left transition hover:opacity-85" onClick={() => navigate(`/profile/${request.id}`)}>
                     <p className="font-medium text-foreground">{request.name}</p>
                     <p className="text-sm text-muted-foreground">Sent you a friend request</p>
-                  </div>
+                  </button>
                 ))}
                 {receivedRequests.length === 0 ? (
                   <p className="text-sm leading-7 text-muted-foreground">No incoming requests right now.</p>

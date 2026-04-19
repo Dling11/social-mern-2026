@@ -168,6 +168,7 @@ function mapUser(user: any): FriendSummary {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: user.role ?? 'user',
     avatarUrl: user.avatarUrl ?? null,
   }
 }

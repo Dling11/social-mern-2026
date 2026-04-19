@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit'
+import adminReducer from '@/features/admin/admin-slice'
 import authReducer from '@/features/auth/auth-slice'
 import feedReducer from '@/features/feed/feed-slice'
 import friendReducer from '@/features/friend/friend-slice'
@@ -9,6 +10,7 @@ import themeReducer from '@/features/theme/theme-slice'
 
 export const store = configureStore({
   reducer: {
+    admin: adminReducer,
     auth: authReducer,
     feed: feedReducer,
     friend: friendReducer,
