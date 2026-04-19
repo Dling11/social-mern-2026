@@ -14,16 +14,19 @@ export function CreatePostCard() {
     register,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<CreatePostValues>({
     resolver: zodResolver(createPostSchema),
     defaultValues: {
       content: '',
+      image: null,
     },
   })
 
   const content = watch('content')
+  const selectedImage = watch('image')
 
   const onSubmit = handleSubmit(async (values) => {
     const result = await dispatch(createPost(values))
@@ -50,7 +53,20 @@ export function CreatePostCard() {
           className="min-h-32 w-full rounded-[24px] border border-input bg-background px-4 py-4 text-sm text-foreground outline-none transition focus:ring-2 focus:ring-ring"
           placeholder="What’s happening in your world today?"
         />
+        <div className="flex items-center justify-between gap-3">
+          <label className="inline-flex cursor-pointer items-center rounded-full bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground">
+            Add image
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(event) => setValue('image', event.target.files?.[0] ?? null, { shouldValidate: true })}
+            />
+          </label>
+          {selectedImage ? <span className="text-sm text-muted-foreground">{selectedImage.name}</span> : null}
+        </div>
         {errors.content ? <p className="text-sm text-destructive">{errors.content.message}</p> : null}
+        {errors.image ? <p className="text-sm text-destructive">{errors.image.message as string}</p> : null}
 
         <div className="flex justify-end">
           <Button type="submit" disabled={createStatus === 'loading'}>

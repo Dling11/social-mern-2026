@@ -4,7 +4,6 @@ import { postService } from '../services/post.service'
 
 const createPostSchema = z.object({
   content: z.string().trim().min(1).max(1200),
-  imageUrl: z.string().url().nullable().optional(),
 })
 
 const addCommentSchema = z.object({
@@ -17,9 +16,19 @@ export const postController = {
     response.status(200).json({ posts })
   },
 
+  async getByAuthor(request: Request, response: Response) {
+    const posts = await postService.getPostsByAuthor(String(request.params.userId), request.user!.id)
+    response.status(200).json({ posts })
+  },
+
   async createPost(request: Request, response: Response) {
-    const payload = createPostSchema.parse(request.body)
-    const post = await postService.createPost(request.user!, payload)
+    const payload = createPostSchema.parse({
+      content: request.body?.content,
+    })
+    const post = await postService.createPost(request.user!, {
+      content: payload.content,
+      image: request.file,
+    })
     response.status(201).json({ post })
   },
 

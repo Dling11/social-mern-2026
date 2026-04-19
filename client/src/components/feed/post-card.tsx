@@ -43,6 +43,11 @@ export function PostCard({ post }: { post: FeedPost }) {
       </div>
 
       <p className="text-sm leading-7 text-foreground">{post.content}</p>
+      {post.imageUrl ? (
+        <div className="overflow-hidden rounded-[24px] border border-border">
+          <img src={post.imageUrl} alt="Post attachment" className="h-auto max-h-[520px] w-full object-cover" />
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-3 border-y border-border py-3">
         <Button

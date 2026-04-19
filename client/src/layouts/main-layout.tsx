@@ -1,15 +1,18 @@
-import { Bell, Home, MessageCircle, Search, Users } from 'lucide-react'
+import { Bell, Home, MessageCircle, Search, UserCircle2, Users } from 'lucide-react'
+import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { logout } from '@/features/auth/auth-slice'
+import { fetchFriendLists } from '@/features/friend/friend-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
 import { cn } from '@/utils/cn'
 
 const navItems = [
   { label: 'Feed', icon: Home, to: '/feed' },
+  { label: 'Profile', icon: UserCircle2, to: '/profile' },
   { label: 'Friends', icon: Users, to: '/feed' },
   { label: 'Messages', icon: MessageCircle, to: '/feed' },
   { label: 'Notifications', icon: Bell, to: '/feed' },
@@ -18,6 +21,11 @@ const navItems = [
 export function MainLayout() {
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
+  const { friends, receivedRequests } = useAppSelector((state) => state.friend)
+
+  useEffect(() => {
+    void dispatch(fetchFriendLists())
+  }, [dispatch])
 
   return (
     <div className="min-h-screen bg-background px-4 py-4 sm:px-6">
@@ -73,28 +81,34 @@ export function MainLayout() {
 
           <div className="space-y-4">
             <Card>
-              <p className="text-sm font-semibold text-foreground">Suggestions</p>
+              <p className="text-sm font-semibold text-foreground">Connections</p>
               <div className="mt-4 space-y-4">
-                {['Mia Jordan', 'Elijah Reed', 'Sophia Tran'].map((name) => (
-                  <div key={name} className="flex items-center justify-between gap-3">
+                {friends.slice(0, 3).map((friend) => (
+                  <div key={friend.id} className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-medium text-foreground">{name}</p>
-                      <p className="text-sm text-muted-foreground">Suggested for you</p>
+                      <p className="font-medium text-foreground">{friend.name}</p>
+                      <p className="text-sm text-muted-foreground">{friend.email}</p>
                     </div>
-                    <Button size="sm" variant="secondary">
-                      Follow
-                    </Button>
+                    <Button size="sm" variant="secondary">Friend</Button>
                   </div>
                 ))}
+                {friends.length === 0 ? <p className="text-sm text-muted-foreground">No friends connected yet.</p> : null}
               </div>
             </Card>
 
             <Card>
-              <p className="text-sm font-semibold text-foreground">Coming Next</p>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                This layout is ready for stories, trends, notifications, chat launchers, and profile shortcuts in the
-                next phases.
-              </p>
+              <p className="text-sm font-semibold text-foreground">Requests</p>
+              <div className="mt-4 space-y-3">
+                {receivedRequests.slice(0, 4).map((request) => (
+                  <div key={request.id}>
+                    <p className="font-medium text-foreground">{request.name}</p>
+                    <p className="text-sm text-muted-foreground">Sent you a friend request</p>
+                  </div>
+                ))}
+                {receivedRequests.length === 0 ? (
+                  <p className="text-sm leading-7 text-muted-foreground">No incoming requests right now.</p>
+                ) : null}
+              </div>
             </Card>
           </div>
         </div>

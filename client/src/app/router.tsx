@@ -6,6 +6,7 @@ import { LoginPage } from '@/pages/auth/login-page'
 import { RegisterPage } from '@/pages/auth/register-page'
 import { FeedPage } from '@/pages/feed/feed-page'
 import { NotFoundPage } from '@/pages/not-found-page'
+import { ProfilePage } from '@/pages/profile/profile-page'
 
 const router = createBrowserRouter([
   {
@@ -24,7 +25,11 @@ const router = createBrowserRouter([
     children: [
       {
         element: <MainLayout />,
-        children: [{ path: '/feed', element: <FeedPage /> }],
+        children: [
+          { path: '/feed', element: <FeedPage /> },
+          { path: '/profile', element: <ProfilePage /> },
+          { path: '/profile/:userId', element: <ProfilePage /> },
+        ],
       },
     ],
   },

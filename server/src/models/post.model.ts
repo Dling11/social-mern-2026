@@ -12,6 +12,7 @@ export interface PostDocument {
   author: Types.ObjectId
   content: string
   imageUrl?: string | null
+  imagePublicId?: string | null
   likes: Types.ObjectId[]
   comments: Types.DocumentArray<PostCommentDocument>
   createdAt: Date
@@ -53,6 +54,10 @@ const postSchema = new Schema<PostDocument>(
       maxlength: 1200,
     },
     imageUrl: {
+      type: String,
+      default: null,
+    },
+    imagePublicId: {
       type: String,
       default: null,
     },

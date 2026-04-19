@@ -6,6 +6,7 @@ export const createPostSchema = z.object({
     .trim()
     .min(1, 'Write something to share with your network.')
     .max(1200, 'Post content must be 1200 characters or fewer.'),
+  image: z.instanceof(File).nullable().optional(),
 })
 
 export const addCommentSchema = z.object({

@@ -25,7 +25,7 @@ export const fetchFeed = createAsyncThunk('feed/fetchFeed', async (_, { rejectWi
 
 export const createPost = createAsyncThunk(
   'feed/createPost',
-  async (payload: { content: string }, { rejectWithValue }) => {
+  async (payload: { content: string; image?: File | null }, { rejectWithValue }) => {
     try {
       return await feedService.createPost(payload)
     } catch (error) {

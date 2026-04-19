@@ -3,10 +3,11 @@ import { PostModel } from '../models/post.model'
 import type { AuthenticatedUser } from '../types/user'
 import type { FeedAuthor, FeedComment, FeedPost } from '../types/post'
 import { ApiError } from '../utils/api-error'
+import { mediaService } from './media.service'
 
 interface CreatePostPayload {
   content: string
-  imageUrl?: string | null
+  image?: Express.Multer.File
 }
 
 interface AddCommentPayload {
@@ -34,11 +35,27 @@ export const postService = {
     return posts.map((post) => mapPost(post, currentUserId))
   },
 
+  async getPostsByAuthor(authorId: string, currentUserId: string) {
+    const posts = await PostModel.find({ author: authorId })
+      .populate(FEED_POPULATE)
+      .sort({ createdAt: -1 })
+      .limit(25)
+
+    return posts.map((post) => mapPost(post, currentUserId))
+  },
+
   async createPost(user: AuthenticatedUser, payload: CreatePostPayload) {
+    let uploadedImage: { url: string; publicId: string } | null = null
+
+    if (payload.image) {
+      uploadedImage = await mediaService.uploadImage(payload.image, 'posts', `post-${user.id}-${Date.now()}`)
+    }
+
     const post = await PostModel.create({
       author: new Types.ObjectId(user.id),
       content: payload.content,
-      imageUrl: payload.imageUrl ?? null,
+      imageUrl: uploadedImage?.url ?? null,
+      imagePublicId: uploadedImage?.publicId ?? null,
       likes: [],
       comments: [],
     })

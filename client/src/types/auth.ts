@@ -3,6 +3,7 @@ export interface AuthUser {
   name: string
   email: string
   avatarUrl?: string | null
+  coverUrl?: string | null
 }
 
 export interface AuthResponse {

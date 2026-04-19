@@ -10,8 +10,18 @@ export const feedService = {
     const { data } = await apiClient.get<FeedResponse>(POSTS_BASE)
     return data.posts
   },
-  async createPost(payload: { content: string }): Promise<FeedPost> {
-    const { data } = await apiClient.post<SinglePostResponse>(POSTS_BASE, payload)
+  async getPostsByUser(userId: string): Promise<FeedPost[]> {
+    const { data } = await apiClient.get<FeedResponse>(`${POSTS_BASE}/user/${userId}`)
+    return data.posts
+  },
+  async createPost(payload: { content: string; image?: File | null }): Promise<FeedPost> {
+    const formData = new FormData()
+    formData.append('content', payload.content)
+    if (payload.image) {
+      formData.append('image', payload.image)
+    }
+
+    const { data } = await apiClient.post<SinglePostResponse>(POSTS_BASE, formData)
     return data.post
   },
   async toggleLike(postId: string): Promise<FeedPost> {
