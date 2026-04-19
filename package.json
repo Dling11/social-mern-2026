@@ -1,0 +1,24 @@
+{
+  "name": "social-platform",
+  "version": "1.0.0",
+  "description": "Full-stack MERN social platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm --prefix client run dev\" \"npm --prefix server run dev\"",
+    "build": "npm --prefix client run build && npm --prefix server run build",
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev"
+  },
+  "keywords": [
+    "mern",
+    "social-media",
+    "react",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
