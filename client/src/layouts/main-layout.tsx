@@ -26,6 +26,8 @@ import { fetchNotifications, receiveNotification } from '@/features/notification
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
 import { getSocket } from '@/services/socket-service'
+import { userService } from '@/services/user-service'
+import type { AuthUser } from '@/types/auth'
 import { cn } from '@/utils/cn'
 
 const navItems = [
@@ -43,11 +45,76 @@ export function MainLayout() {
   const { friends, receivedRequests } = useAppSelector((state) => state.friend)
   const unreadCount = useAppSelector((state) => state.notification.items.filter((item) => !item.isRead).length)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<AuthUser[]>([])
+  const [isSearchLoading, setIsSearchLoading] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   useEffect(() => {
     void dispatch(fetchFriendLists())
     void dispatch(fetchNotifications())
   }, [dispatch])
+
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim()
+
+    if (trimmedQuery.length < 2) {
+      setSearchResults([])
+      setIsSearchLoading(false)
+      return
+    }
+
+    let isActive = true
+    setIsSearchLoading(true)
+
+    const timeoutId = window.setTimeout(() => {
+      void userService
+        .searchUsers(trimmedQuery)
+        .then((users) => {
+          if (!isActive) {
+            return
+          }
+
+          setSearchResults(users)
+          setIsSearchOpen(true)
+        })
+        .catch(() => {
+          if (!isActive) {
+            return
+          }
+
+          setSearchResults([])
+        })
+        .finally(() => {
+          if (!isActive) {
+            return
+          }
+
+          setIsSearchLoading(false)
+        })
+    }, 220)
+
+    return () => {
+      isActive = false
+      window.clearTimeout(timeoutId)
+    }
+  }, [searchQuery])
+
+  const handleSearchSubmit = () => {
+    const trimmedQuery = searchQuery.trim()
+    if (!trimmedQuery) {
+      return
+    }
+
+    setIsSearchOpen(false)
+    navigate(`/discover?q=${encodeURIComponent(trimmedQuery)}`)
+  }
+
+  const handleSelectUser = (userId: string) => {
+    setIsSearchOpen(false)
+    setSearchQuery('')
+    setSearchResults([])
+    navigate(`/profile/${userId}`)
+  }
 
   useEffect(() => {
     const socket = getSocket()
@@ -64,7 +131,7 @@ export function MainLayout() {
   return (
     <div className="min-h-screen bg-background px-4 py-4 sm:px-6">
       <div className="mx-auto flex max-w-7xl flex-col gap-4">
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-[30px] border border-border/70 bg-card/90 px-5 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.1)] backdrop-blur-xl">
+        <header className="relative z-50 flex flex-wrap items-center justify-between gap-4 rounded-[30px] border border-border/70 bg-card/90 px-5 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.1)] backdrop-blur-xl">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">Social Platform</p>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Newsfeed</h1>
@@ -75,19 +142,64 @@ export function MainLayout() {
               className="hidden min-w-80 items-center gap-3 md:flex"
               onSubmit={(event) => {
                 event.preventDefault()
-                if (searchQuery.trim()) {
-                  navigate(`/discover?q=${encodeURIComponent(searchQuery.trim())}`)
-                }
+                handleSearchSubmit()
               }}
             >
-              <div className="relative w-full">
+              <div className="relative z-50 w-full">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
+                  onFocus={() => {
+                    if (searchResults.length > 0 || searchQuery.trim().length >= 2) {
+                      setIsSearchOpen(true)
+                    }
+                  }}
+                  onBlur={() => {
+                    window.setTimeout(() => setIsSearchOpen(false), 140)
+                  }}
                   className="rounded-full pl-10"
                   placeholder="Search people and profiles"
                 />
+                {isSearchOpen && searchQuery.trim().length >= 2 ? (
+                  <div className="absolute left-0 right-0 top-[calc(100%+0.65rem)] z-[80] overflow-hidden rounded-[10px] border border-border/80 bg-card shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
+                    <div className="border-b border-border/70 px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                      {isSearchLoading ? 'Searching...' : 'People'}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto py-2">
+                      {!isSearchLoading && searchResults.length > 0 ? (
+                        searchResults.map((result) => (
+                          <button
+                            key={result.id}
+                            type="button"
+                            className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition hover:bg-accent"
+                            onClick={() => handleSelectUser(result.id)}
+                          >
+                            <Avatar name={result.name} src={result.avatarUrl} className="h-11 w-11 rounded-[10px]" />
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-foreground">{result.name}</p>
+                              <p className="truncate text-sm text-muted-foreground">
+                                {result.username ? `@${result.username}` : result.email}
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      ) : null}
+                      {!isSearchLoading && searchResults.length === 0 ? (
+                        <div className="px-4 py-4 text-sm text-muted-foreground">No matching users found.</div>
+                      ) : null}
+                      {!isSearchLoading && searchResults.length > 0 ? (
+                        <button
+                          type="button"
+                          className="w-full cursor-pointer border-t border-border/70 px-4 py-3 text-left text-sm font-medium text-primary transition hover:bg-accent"
+                          onClick={handleSearchSubmit}
+                        >
+                          See all results for "{searchQuery.trim()}"
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </form>
 
