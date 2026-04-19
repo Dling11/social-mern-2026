@@ -1,6 +1,20 @@
 import { useEffect } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { fetchAdminUsers, updateAdminUserRole } from '@/features/admin/admin-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
@@ -16,46 +30,49 @@ export function AdminUsersPage() {
 
   return (
     <Card className="overflow-hidden p-0">
-      <div className="border-b border-border px-6 py-4">
-        <p className="text-sm font-semibold text-foreground">User Management</p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-secondary/60 text-left text-muted-foreground">
-            <tr>
-              <th className="px-6 py-4 font-medium">User</th>
-              <th className="px-6 py-4 font-medium">Role</th>
-              <th className="px-6 py-4 font-medium">Friends</th>
-              <th className="px-6 py-4 font-medium">Joined</th>
-              <th className="px-6 py-4 font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-t border-border">
-                <td className="px-6 py-4">
-                  <p className="font-medium text-foreground">{user.name}</p>
-                  <p className="text-muted-foreground">{user.email}</p>
-                </td>
-                <td className="px-6 py-4 capitalize text-foreground">{user.role}</td>
-                <td className="px-6 py-4 text-foreground">{user.friendCount}</td>
-                <td className="px-6 py-4 text-muted-foreground">{formatRelativeDate(user.createdAt)}</td>
-                <td className="px-6 py-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      void dispatch(updateAdminUserRole({ userId: user.id, role: user.role === 'admin' ? 'user' : 'admin' }))
-                    }
-                  >
-                    Make {user.role === 'admin' ? 'User' : 'Admin'}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <CardHeader className="border-b border-border/70 px-6 py-5">
+        <CardTitle>User Management</CardTitle>
+        <CardDescription>Promote admins, review accounts, and monitor relationship growth.</CardDescription>
+      </CardHeader>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Friends</TableHead>
+            <TableHead>Joined</TableHead>
+            <TableHead className="text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell>
+                <p className="font-medium text-foreground">{user.name}</p>
+                <p className="text-muted-foreground">{user.email}</p>
+              </TableCell>
+              <TableCell>
+                <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
+                  {user.role}
+                </Badge>
+              </TableCell>
+              <TableCell>{user.friendCount}</TableCell>
+              <TableCell className="text-muted-foreground">{formatRelativeDate(user.createdAt)}</TableCell>
+              <TableCell className="text-right">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    void dispatch(updateAdminUserRole({ userId: user.id, role: user.role === 'admin' ? 'user' : 'admin' }))
+                  }
+                >
+                  Make {user.role === 'admin' ? 'User' : 'Admin'}
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </Card>
   )
 }

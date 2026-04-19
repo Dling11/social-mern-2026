@@ -1,7 +1,15 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Avatar } from '@/components/shared/avatar'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   acceptFriendRequest,
   cancelFriendRequest,
@@ -23,84 +31,124 @@ export function FriendsPage() {
   return (
     <div className="space-y-4">
       <Card>
-        <p className="text-lg font-semibold text-foreground">Friends</p>
-        <p className="mt-2 text-sm text-muted-foreground">Manage your connections and pending requests.</p>
+        <CardHeader>
+          <CardTitle>Connections</CardTitle>
+          <CardDescription>Manage your friendships and pending requests in one place.</CardDescription>
+        </CardHeader>
       </Card>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Incoming Requests</h2>
-        {receivedRequests.length > 0 ? (
-          receivedRequests.map((request) => (
-            <Card key={request.id} className="flex flex-wrap items-center justify-between gap-4">
-              <Link to={`/profile/${request.id}`} className="flex items-center gap-3">
-                <Avatar user={request} />
-                <div>
-                  <p className="font-medium text-foreground">{request.name}</p>
-                  <p className="text-sm text-muted-foreground">{request.email}</p>
-                </div>
-              </Link>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => void dispatch(acceptFriendRequest(request.id))}>Accept</Button>
-                <Button size="sm" variant="outline" onClick={() => void dispatch(declineFriendRequest(request.id))}>Decline</Button>
-              </div>
-            </Card>
-          ))
-        ) : (
-          <Card><p className="text-sm text-muted-foreground">No incoming requests.</p></Card>
-        )}
-      </section>
+      <Tabs defaultValue="incoming" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="incoming">Incoming</TabsTrigger>
+          <TabsTrigger value="sent">Sent</TabsTrigger>
+          <TabsTrigger value="friends">Friends</TabsTrigger>
+        </TabsList>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Sent Requests</h2>
-        {sentRequests.length > 0 ? (
-          sentRequests.map((request) => (
-            <Card key={request.id} className="flex flex-wrap items-center justify-between gap-4">
-              <Link to={`/profile/${request.id}`} className="flex items-center gap-3">
-                <Avatar user={request} />
-                <div>
-                  <p className="font-medium text-foreground">{request.name}</p>
-                  <p className="text-sm text-muted-foreground">{request.email}</p>
-                </div>
-              </Link>
-              <Button size="sm" variant="outline" onClick={() => void dispatch(cancelFriendRequest(request.id))}>
-                Cancel
-              </Button>
-            </Card>
-          ))
-        ) : (
-          <Card><p className="text-sm text-muted-foreground">No sent requests.</p></Card>
-        )}
-      </section>
+        <TabsContent value="incoming" className="space-y-3">
+          {receivedRequests.length > 0 ? (
+            receivedRequests.map((request) => (
+              <FriendRow
+                key={request.id}
+                name={request.name}
+                email={request.email}
+                avatarUrl={request.avatarUrl}
+                profileTo={`/profile/${request.id}`}
+                actions={
+                  <>
+                    <Button size="sm" onClick={() => void dispatch(acceptFriendRequest(request.id))}>
+                      Accept
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => void dispatch(declineFriendRequest(request.id))}>
+                      Decline
+                    </Button>
+                  </>
+                }
+              />
+            ))
+          ) : (
+            <EmptyCard text="No incoming requests." />
+          )}
+        </TabsContent>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Your Friends</h2>
-        {friends.length > 0 ? (
-          friends.map((friend) => (
-            <Card key={friend.id} className="flex flex-wrap items-center justify-between gap-4">
-              <Link to={`/profile/${friend.id}`} className="flex items-center gap-3">
-                <Avatar user={friend} />
-                <div>
-                  <p className="font-medium text-foreground">{friend.name}</p>
-                  <p className="text-sm text-muted-foreground">{friend.email}</p>
-                </div>
-              </Link>
-              <Button size="sm" variant="outline" onClick={() => void dispatch(removeFriend(friend.id))}>
-                Remove
-              </Button>
-            </Card>
-          ))
-        ) : (
-          <Card><p className="text-sm text-muted-foreground">No friends yet.</p></Card>
-        )}
-      </section>
+        <TabsContent value="sent" className="space-y-3">
+          {sentRequests.length > 0 ? (
+            sentRequests.map((request) => (
+              <FriendRow
+                key={request.id}
+                name={request.name}
+                email={request.email}
+                avatarUrl={request.avatarUrl}
+                profileTo={`/profile/${request.id}`}
+                actions={
+                  <Button size="sm" variant="outline" onClick={() => void dispatch(cancelFriendRequest(request.id))}>
+                    Cancel
+                  </Button>
+                }
+              />
+            ))
+          ) : (
+            <EmptyCard text="No sent requests." />
+          )}
+        </TabsContent>
+
+        <TabsContent value="friends" className="space-y-3">
+          {friends.length > 0 ? (
+            friends.map((friend) => (
+              <FriendRow
+                key={friend.id}
+                name={friend.name}
+                email={friend.email}
+                avatarUrl={friend.avatarUrl}
+                profileTo={`/profile/${friend.id}`}
+                actions={
+                  <Button size="sm" variant="outline" onClick={() => void dispatch(removeFriend(friend.id))}>
+                    Remove
+                  </Button>
+                }
+              />
+            ))
+          ) : (
+            <EmptyCard text="No friends yet." />
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
 
-function Avatar({ user }: { user: { name: string; avatarUrl?: string | null } }) {
-  return user.avatarUrl ? (
-    <img src={user.avatarUrl} alt={user.name} className="h-12 w-12 rounded-2xl object-cover" />
-  ) : (
-    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-secondary font-semibold text-primary">{user.name.charAt(0)}</div>
+function FriendRow({
+  name,
+  email,
+  avatarUrl,
+  profileTo,
+  actions,
+}: {
+  name: string
+  email: string
+  avatarUrl?: string | null
+  profileTo: string
+  actions: React.ReactNode
+}) {
+  return (
+    <Card className="p-4">
+      <CardContent className="flex flex-wrap items-center justify-between gap-4 p-0">
+        <Link to={profileTo} className="flex items-center gap-3 transition hover:opacity-90">
+          <Avatar name={name} src={avatarUrl} className="h-12 w-12" />
+          <div>
+            <p className="font-medium text-foreground">{name}</p>
+            <p className="text-sm text-muted-foreground">{email}</p>
+          </div>
+        </Link>
+        <div className="flex gap-2">{actions}</div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function EmptyCard({ text }: { text: string }) {
+  return (
+    <Card>
+      <CardContent className="p-6 text-sm text-muted-foreground">{text}</CardContent>
+    </Card>
   )
 }
