@@ -2,6 +2,8 @@ import { configureStore } from '@reduxjs/toolkit'
 import authReducer from '@/features/auth/auth-slice'
 import feedReducer from '@/features/feed/feed-slice'
 import friendReducer from '@/features/friend/friend-slice'
+import messageReducer from '@/features/message/message-slice'
+import notificationReducer from '@/features/notification/notification-slice'
 import profileReducer from '@/features/profile/profile-slice'
 import themeReducer from '@/features/theme/theme-slice'
 
@@ -10,6 +12,8 @@ export const store = configureStore({
     auth: authReducer,
     feed: feedReducer,
     friend: friendReducer,
+    message: messageReducer,
+    notification: notificationReducer,
     profile: profileReducer,
     theme: themeReducer,
   },

@@ -1,20 +1,23 @@
 import { Bell, Home, MessageCircle, Search, UserCircle2, Users } from 'lucide-react'
 import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { NotificationPanel } from '@/components/notifications/notification-panel'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { logout } from '@/features/auth/auth-slice'
 import { fetchFriendLists } from '@/features/friend/friend-slice'
+import { fetchNotifications, receiveNotification } from '@/features/notification/notification-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
+import { getSocket } from '@/services/socket-service'
 import { cn } from '@/utils/cn'
 
 const navItems = [
   { label: 'Feed', icon: Home, to: '/feed' },
   { label: 'Profile', icon: UserCircle2, to: '/profile' },
   { label: 'Friends', icon: Users, to: '/feed' },
-  { label: 'Messages', icon: MessageCircle, to: '/feed' },
+  { label: 'Messages', icon: MessageCircle, to: '/messages' },
   { label: 'Notifications', icon: Bell, to: '/feed' },
 ]
 
@@ -22,9 +25,23 @@ export function MainLayout() {
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
   const { friends, receivedRequests } = useAppSelector((state) => state.friend)
+  const unreadCount = useAppSelector((state) => state.notification.items.filter((item) => !item.isRead).length)
 
   useEffect(() => {
     void dispatch(fetchFriendLists())
+    void dispatch(fetchNotifications())
+  }, [dispatch])
+
+  useEffect(() => {
+    const socket = getSocket()
+    const handleNotification = (notification: any) => {
+      dispatch(receiveNotification(notification))
+    }
+
+    socket.on('notification:new', handleNotification)
+    return () => {
+      socket.off('notification:new', handleNotification)
+    }
   }, [dispatch])
 
   return (
@@ -40,6 +57,14 @@ export function MainLayout() {
             <div className="hidden min-w-72 items-center gap-2 rounded-full border border-border bg-background px-4 py-2 md:flex">
               <Search className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Search people, posts, and communities</span>
+            </div>
+            <div className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-background text-foreground">
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 ? (
+                <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-center text-[10px] font-semibold text-primary-foreground">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              ) : null}
             </div>
             <ThemeToggle />
             <Button variant="outline" onClick={() => void dispatch(logout())}>
@@ -110,6 +135,8 @@ export function MainLayout() {
                 ) : null}
               </div>
             </Card>
+
+            <NotificationPanel />
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { Camera, ImagePlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { PostCard } from '@/components/feed/post-card'
 import { FeedSkeleton } from '@/components/feed/feed-skeleton'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ import type { Profile } from '@/types/profile'
 
 export function ProfilePage() {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const { userId } = useParams()
   const authUser = useAppSelector((state) => state.auth.user)
   const { actionStatus } = useAppSelector((state) => state.friend)
@@ -188,13 +189,18 @@ export function ProfilePage() {
                   </Button>
                 </>
               ) : profile.friendshipStatus === 'friends' ? (
-                <Button
-                  variant="outline"
-                  onClick={() => void dispatch(removeFriend(profile.id))}
-                  disabled={actionStatus === 'loading'}
-                >
-                  Remove friend
-                </Button>
+                <>
+                  <Button variant="secondary" onClick={() => navigate(`/messages?user=${profile.id}`)}>
+                    Message
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => void dispatch(removeFriend(profile.id))}
+                    disabled={actionStatus === 'loading'}
+                  >
+                    Remove friend
+                  </Button>
+                </>
               ) : null}
             </div>
           </div>

@@ -2,6 +2,7 @@ import { UserModel } from '../models/user.model'
 import type { FriendListResponse, FriendSummary, FriendshipStatus } from '../types/friend'
 import type { AuthenticatedUser } from '../types/user'
 import { ApiError } from '../utils/api-error'
+import { notificationService } from './notification.service'
 
 export const friendService = {
   async getFriendLists(userId: string): Promise<FriendListResponse> {
@@ -72,6 +73,16 @@ export const friendService = {
     targetUser.receivedFriendRequests.push(currentUser._id)
     await Promise.all([currentUser.save(), targetUser.save()])
 
+    await notificationService.create({
+      recipientId: targetUser.id,
+      actorId: currentUser.id,
+      type: 'friend_request_received',
+      title: 'New friend request',
+      body: `${currentUser.name} sent you a friend request.`,
+      entityId: currentUser.id,
+      entityType: 'user',
+    })
+
     return this.getFriendLists(user.id)
   },
 
@@ -98,6 +109,17 @@ export const friendService = {
     }
 
     await Promise.all([currentUser.save(), requester.save()])
+
+    await notificationService.create({
+      recipientId: requester.id,
+      actorId: currentUser.id,
+      type: 'friend_request_accepted',
+      title: 'Friend request accepted',
+      body: `${currentUser.name} accepted your friend request.`,
+      entityId: currentUser.id,
+      entityType: 'user',
+    })
+
     return this.getFriendLists(user.id)
   },
 

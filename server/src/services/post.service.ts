@@ -1,9 +1,11 @@
 import { Types } from 'mongoose'
 import { PostModel } from '../models/post.model'
+import { UserModel } from '../models/user.model'
 import type { AuthenticatedUser } from '../types/user'
 import type { FeedAuthor, FeedComment, FeedPost } from '../types/post'
 import { ApiError } from '../utils/api-error'
 import { mediaService } from './media.service'
+import { notificationService } from './notification.service'
 
 interface CreatePostPayload {
   content: string
@@ -83,6 +85,21 @@ export const postService = {
 
     await post.save()
 
+    if (!hasLiked) {
+      const author = await UserModel.findById(post.author)
+      if (author) {
+        await notificationService.create({
+          recipientId: author.id,
+          actorId: user.id,
+          type: 'post_liked',
+          title: 'Someone liked your post',
+          body: `${user.name} liked your post.`,
+          entityId: post.id,
+          entityType: 'post',
+        })
+      }
+    }
+
     const populatedPost = await PostModel.findById(post._id).populate(FEED_POPULATE)
     if (!populatedPost) {
       throw new ApiError(404, 'Post not found.')
@@ -104,6 +121,19 @@ export const postService = {
       updatedAt: new Date(),
     })
     await post.save()
+
+    const author = await UserModel.findById(post.author)
+    if (author) {
+      await notificationService.create({
+        recipientId: author.id,
+        actorId: user.id,
+        type: 'post_commented',
+        title: 'New comment on your post',
+        body: `${user.name} commented on your post.`,
+        entityId: post.id,
+        entityType: 'post',
+      })
+    }
 
     const populatedPost = await PostModel.findById(post._id).populate(FEED_POPULATE)
     if (!populatedPost) {
