@@ -3,13 +3,16 @@ import { z } from 'zod'
 import { authService } from '../services/auth.service'
 
 const registerSchema = z.object({
-  name: z.string().min(2).max(60),
+  firstName: z.string().trim().min(2).max(30),
+  lastName: z.string().trim().min(2).max(30),
+  middleName: z.string().trim().max(30).optional().or(z.literal('')),
+  username: z.string().trim().min(3).max(30).regex(/^[a-zA-Z0-9._]+$/),
   email: z.string().email(),
   password: z.string().min(6),
 })
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().trim().min(3),
   password: z.string().min(6),
 })
 

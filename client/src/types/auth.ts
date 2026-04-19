@@ -1,6 +1,10 @@
 export interface AuthUser {
   id: string
   name: string
+  firstName?: string
+  lastName?: string
+  middleName?: string | null
+  username?: string | null
   email: string
   role: 'user' | 'admin'
   avatarUrl?: string | null
@@ -12,10 +16,15 @@ export interface AuthResponse {
 }
 
 export interface LoginPayload {
-  email: string
+  identifier: string
   password: string
 }
 
-export interface RegisterPayload extends LoginPayload {
-  name: string
+export interface RegisterPayload {
+  firstName: string
+  lastName: string
+  middleName?: string
+  username: string
+  email: string
+  password: string
 }

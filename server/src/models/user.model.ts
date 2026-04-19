@@ -2,6 +2,10 @@ import { Schema, Types, model } from 'mongoose'
 
 export interface UserDocument {
   name: string
+  firstName: string
+  lastName: string
+  middleName?: string | null
+  username?: string | null
   email: string
   password: string
   role: 'user' | 'admin'
@@ -24,6 +28,36 @@ const userSchema = new Schema<UserDocument>(
       trim: true,
       minlength: 2,
       maxlength: 60,
+    },
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 30,
+    },
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 30,
+    },
+    middleName: {
+      type: String,
+      trim: true,
+      maxlength: 30,
+      default: null,
+    },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      trim: true,
+      minlength: 3,
+      maxlength: 30,
+      default: null,
     },
     email: {
       type: String,

@@ -99,9 +99,8 @@ export function MainLayout() {
               <div className="flex items-center gap-3">
                 <Avatar name={user?.name ?? 'You'} src={user?.avatarUrl} className="h-14 w-14" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Signed in as</p>
+                  <p className="text-sm text-muted-foreground">Profile</p>
                   <h2 className="mt-1 text-xl font-semibold text-foreground">{user?.name}</h2>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
             </div>

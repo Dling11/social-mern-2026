@@ -15,6 +15,10 @@ export const bootstrapService = {
       const hashedPassword = await bcrypt.hash(env.ADMIN_BOOTSTRAP_PASSWORD, 12)
       await UserModel.create({
         name: 'Admin',
+        firstName: 'Admin',
+        lastName: 'User',
+        middleName: null,
+        username: 'admin',
         email,
         password: hashedPassword,
         role: 'admin',

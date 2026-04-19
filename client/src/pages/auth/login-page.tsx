@@ -1,3 +1,5 @@
+import { Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -14,6 +16,7 @@ export function LoginPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const status = useAppSelector((state) => state.auth.status)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -22,7 +25,7 @@ export function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      identifier: '',
       password: '',
     },
   })
@@ -37,21 +40,36 @@ export function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      description="Sign in to access your social feed, profile, and conversations."
+      description="Sign in with your email or username to access your social feed, profile, and conversations."
       footerText="New here?"
       footerLinkLabel="Create an account"
       footerLinkTo="/register"
     >
       <form className="space-y-5" onSubmit={(event) => void onSubmit(event)}>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
-          {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
+          <Label htmlFor="identifier">Email or Username</Label>
+          <Input id="identifier" placeholder="you@example.com or username" {...register('identifier')} />
+          {errors.identifier ? <p className="text-sm text-destructive">{errors.identifier.message}</p> : null}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" placeholder="Enter your password" {...register('password')} />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Enter your password"
+              className="pr-11"
+              {...register('password')}
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+              onClick={() => setShowPassword((value) => !value)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.password ? <p className="text-sm text-destructive">{errors.password.message}</p> : null}
         </div>
 

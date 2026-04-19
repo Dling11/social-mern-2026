@@ -7,27 +7,41 @@ import type { AuthenticatedUser } from '../types/user'
 import { ApiError } from '../utils/api-error'
 
 interface RegisterPayload {
-  name: string
+  firstName: string
+  lastName: string
+  middleName?: string
+  username: string
   email: string
   password: string
 }
 
 interface LoginPayload {
-  email: string
+  identifier: string
   password: string
 }
 
 export const authService = {
   async register(payload: RegisterPayload) {
-    const existingUser = await UserModel.findOne({ email: payload.email.toLowerCase() })
-    if (existingUser) {
+    const normalizedEmail = payload.email.toLowerCase()
+    const normalizedUsername = payload.username.toLowerCase()
+    const existingUser = await UserModel.findOne({
+      $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
+    })
+    if (existingUser?.email === normalizedEmail) {
       throw new ApiError(409, 'An account with this email already exists.')
+    }
+    if (existingUser?.username === normalizedUsername) {
+      throw new ApiError(409, 'That username is already taken.')
     }
 
     const hashedPassword = await bcrypt.hash(payload.password, 12)
-    const normalizedEmail = payload.email.toLowerCase()
+    const displayName = [payload.firstName, payload.middleName?.trim(), payload.lastName].filter(Boolean).join(' ')
     const user = await UserModel.create({
-      ...payload,
+      name: displayName,
+      firstName: payload.firstName.trim(),
+      lastName: payload.lastName.trim(),
+      middleName: payload.middleName?.trim() || null,
+      username: normalizedUsername,
       email: normalizedEmail,
       password: hashedPassword,
       role: env.ADMIN_EMAIL_LIST.includes(normalizedEmail) ? 'admin' : 'user',
@@ -40,7 +54,10 @@ export const authService = {
   },
 
   async login(payload: LoginPayload) {
-    const user = await UserModel.findOne({ email: payload.email.toLowerCase() }).select('+password')
+    const normalizedIdentifier = payload.identifier.toLowerCase()
+    const user = await UserModel.findOne({
+      $or: [{ email: normalizedIdentifier }, { username: normalizedIdentifier }],
+    }).select('+password')
     if (!user) {
       throw new ApiError(401, 'Invalid email or password.')
     }
@@ -94,10 +111,24 @@ function createToken(userId: string) {
   })
 }
 
-function mapUser(user: { id: string; name: string; email: string; role: 'user' | 'admin'; avatarUrl?: string | null }): AuthenticatedUser {
+function mapUser(user: {
+  id: string
+  name: string
+  firstName?: string
+  lastName?: string
+  middleName?: string | null
+  username?: string | null
+  email: string
+  role: 'user' | 'admin'
+  avatarUrl?: string | null
+}): AuthenticatedUser {
   return {
     id: user.id,
     name: user.name,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    middleName: user.middleName ?? null,
+    username: user.username ?? null,
     email: user.email,
     role: user.role,
     avatarUrl: user.avatarUrl ?? null,
