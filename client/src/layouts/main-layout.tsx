@@ -129,9 +129,10 @@ export function MainLayout() {
   }, [dispatch])
 
   return (
-    <div className="min-h-screen bg-background px-4 py-4 sm:px-6">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4">
-        <header className="relative z-50 flex flex-wrap items-center justify-between gap-4 rounded-[30px] border border-border/70 bg-card/90 px-5 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.1)] backdrop-blur-xl">
+    <div className="min-h-screen bg-background">
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-50 border-b border-border/70 bg-background/92 backdrop-blur-xl">
+          <div className="relative z-50 mx-auto flex w-full max-w-[1720px] flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6 xl:px-7">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">Social Platform</p>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Newsfeed</h1>
@@ -224,10 +225,11 @@ export function MainLayout() {
               Logout
             </Button>
           </div>
+          </div>
         </header>
 
-        <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_340px]">
-          <Card className="h-fit p-0">
+        <div className="mx-auto grid w-full max-w-[1720px] gap-5 px-5 py-4 sm:px-6 xl:grid-cols-[300px_minmax(0,1fr)_340px] xl:px-7">
+          <Card className="hidden h-fit self-start overflow-hidden p-0 xl:sticky xl:top-[5rem] xl:block">
             <CardHeader className="rounded-t-[1.8rem] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_44%),linear-gradient(135deg,rgba(59,130,246,0.08),rgba(16,185,129,0.04))] px-5 py-5">
               <div className="flex items-center gap-3">
                 <Avatar name={user?.name ?? 'You'} src={user?.avatarUrl} className="h-14 w-14 ring-4 ring-background" />
@@ -285,11 +287,11 @@ export function MainLayout() {
             </CardContent>
           </Card>
 
-          <main>
+          <main className="min-w-0 pr-1">
             <Outlet />
           </main>
 
-          <div className="space-y-4">
+          <div className="hidden self-start space-y-4 xl:sticky xl:top-[5rem] xl:block">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">

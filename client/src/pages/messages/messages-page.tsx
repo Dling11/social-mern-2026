@@ -174,8 +174,8 @@ export function MessagesPage() {
   }
 
   return (
-    <Card className="grid min-h-[76vh] grid-cols-1 overflow-hidden p-0 lg:grid-cols-[340px_minmax(0,1fr)]">
-      <aside className="border-b border-border/70 bg-secondary/20 lg:border-b-0 lg:border-r">
+    <Card className="grid min-h-[calc(100vh-8rem)] grid-cols-1 overflow-hidden p-0 lg:grid-cols-[360px_minmax(0,1fr)] xl:min-h-[calc(100vh-7.5rem)]">
+      <aside className="flex min-h-0 flex-col border-b border-border/70 bg-secondary/20 lg:border-b-0 lg:border-r">
         <div className="space-y-4 border-b border-border/70 px-5 py-5">
           <div>
             <p className="text-sm font-semibold text-foreground">Messages</p>
@@ -195,7 +195,7 @@ export function MessagesPage() {
           </div>
         </div>
 
-        <div className="max-h-[76vh] space-y-5 overflow-y-auto px-4 py-4">
+        <div className="max-h-[32rem] space-y-5 overflow-y-auto px-4 py-4 lg:max-h-none lg:flex-1">
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Recent chats</p>
@@ -274,7 +274,7 @@ export function MessagesPage() {
         </div>
       </aside>
 
-      <section className="flex min-h-[76vh] flex-col">
+      <section className="flex min-h-0 flex-col">
         <div className="flex items-center justify-between gap-4 border-b border-border/70 px-5 py-4">
           {activePeer ? (
             <div className="flex items-center gap-3">
@@ -296,7 +296,7 @@ export function MessagesPage() {
           {activePeer ? <Badge variant="outline">{messages.length} messages</Badge> : null}
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,250,252,0.35),transparent)] px-5 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,250,252,0.35),transparent)] px-5 py-5">
           {activeConversationId ? (
             <div className="space-y-4">
               {messages.length === 0 ? (
