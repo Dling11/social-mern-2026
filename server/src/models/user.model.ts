@@ -7,6 +7,7 @@ export interface UserDocument {
   middleName?: string | null
   username?: string | null
   bio?: string | null
+  avatarCaption?: string | null
   email: string
   password: string
   role: 'user' | 'admin'
@@ -61,6 +62,12 @@ const userSchema = new Schema<UserDocument>(
       default: null,
     },
     bio: {
+      type: String,
+      trim: true,
+      maxlength: 180,
+      default: null,
+    },
+    avatarCaption: {
       type: String,
       trim: true,
       maxlength: 180,
@@ -123,5 +130,46 @@ const userSchema = new Schema<UserDocument>(
     timestamps: true,
   },
 )
+
+userSchema.pre('validate', function () {
+  const currentName = this.name?.trim() || ''
+  const emailLocalPart = this.email?.split('@')[0]?.trim() || 'member'
+  const fallbackSource = currentName || emailLocalPart
+  const parts = fallbackSource
+    .split(/[._\s-]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  const normalizedFirstName = this.firstName?.trim() || parts[0] || 'Member'
+  const normalizedLastName = this.lastName?.trim() || parts[1] || 'User'
+
+  if (!this.firstName) {
+    this.firstName = ensureMinLength(capitalize(normalizedFirstName))
+  }
+
+  if (!this.lastName) {
+    this.lastName = ensureMinLength(capitalize(normalizedLastName))
+  }
+
+  if (!this.name || !this.name.trim()) {
+    this.name = [this.firstName, this.middleName?.trim(), this.lastName].filter(Boolean).join(' ')
+  }
+})
+
+function capitalize(value: string) {
+  if (!value) {
+    return value
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function ensureMinLength(value: string) {
+  if (value.length >= 2) {
+    return value
+  }
+
+  return `${value}x`
+}
 
 export const UserModel = model<UserDocument>('User', userSchema)

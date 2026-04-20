@@ -144,6 +144,7 @@ function mapUser(user: {
   middleName?: string | null
   username?: string | null
   bio?: string | null
+  avatarCaption?: string | null
   email: string
   role: 'user' | 'admin'
   avatarUrl?: string | null
@@ -157,6 +158,7 @@ function mapUser(user: {
     middleName: user.middleName ?? null,
     username: user.username ?? null,
     bio: user.bio ?? null,
+    avatarCaption: user.avatarCaption ?? null,
     email: user.email,
     role: user.role,
     avatarUrl: user.avatarUrl ?? null,

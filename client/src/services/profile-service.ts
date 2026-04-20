@@ -21,6 +21,20 @@ export const profileService = {
     const { data } = await apiClient.post<ProfileResponse>(`${PROFILE_BASE}/me/avatar`, formData)
     return data.profile
   },
+  async updateAvatar(payload: { file?: File | null; caption?: string | null }): Promise<Profile> {
+    const formData = new FormData()
+
+    if (payload.file) {
+      formData.append('image', payload.file)
+    }
+
+    if (typeof payload.caption !== 'undefined') {
+      formData.append('caption', payload.caption ?? '')
+    }
+
+    const { data } = await apiClient.patch<ProfileResponse>(`${PROFILE_BASE}/me/avatar`, formData)
+    return data.profile
+  },
   async uploadCover(file: File): Promise<Profile> {
     const formData = new FormData()
     formData.append('image', file)

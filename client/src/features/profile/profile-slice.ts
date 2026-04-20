@@ -37,6 +37,19 @@ export const uploadAvatar = createAsyncThunk(
   },
 )
 
+export const updateAvatarDetails = createAsyncThunk(
+  'profile/updateAvatarDetails',
+  async (payload: { file?: File | null; caption?: string | null }, { dispatch, rejectWithValue }) => {
+    try {
+      const profile = await profileService.updateAvatar(payload)
+      dispatch(setAuthUser(profile))
+      return profile
+    } catch (error) {
+      return rejectWithValue(profileService.getErrorMessage(error))
+    }
+  },
+)
+
 export const uploadCover = createAsyncThunk(
   'profile/uploadCover',
   async (file: File, { dispatch, rejectWithValue }) => {
@@ -89,6 +102,18 @@ const profileSlice = createSlice({
         toast.success('Profile picture updated.')
       })
       .addCase(uploadAvatar.rejected, (state, action) => {
+        state.uploadStatus = 'failed'
+        toast.error((action.payload as string) ?? 'Unable to update your profile picture.')
+      })
+      .addCase(updateAvatarDetails.pending, (state) => {
+        state.uploadStatus = 'loading'
+      })
+      .addCase(updateAvatarDetails.fulfilled, (state, action) => {
+        state.uploadStatus = 'idle'
+        state.current = action.payload
+        toast.success('Profile picture updated.')
+      })
+      .addCase(updateAvatarDetails.rejected, (state, action) => {
         state.uploadStatus = 'failed'
         toast.error((action.payload as string) ?? 'Unable to update your profile picture.')
       })

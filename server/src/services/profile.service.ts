@@ -11,6 +11,8 @@ export interface ProfileResponse {
   name: string
   username?: string | null
   bio?: string | null
+  avatarCaption?: string | null
+  createdAt: string
   email: string
   avatarUrl?: string | null
   coverUrl?: string | null
@@ -31,17 +33,28 @@ export const profileService = {
     return mapProfile(user, postCount, friendshipStatus)
   },
 
-  async updateAvatar(user: AuthenticatedUser, file: Express.Multer.File) {
+  async updateAvatar(user: AuthenticatedUser, payload: { file?: Express.Multer.File; caption?: string | null }) {
     const existingUser = await UserModel.findById(user.id)
     if (!existingUser) {
       throw new ApiError(404, 'Profile not found.')
     }
 
-    const uploaded = await mediaService.uploadImage(file, 'profiles/avatars', `avatar-${existingUser.id}`)
-    await mediaService.destroy(existingUser.avatarPublicId)
+    if (!payload.file && typeof payload.caption === 'undefined') {
+      throw new ApiError(400, 'Profile image or caption is required.')
+    }
 
-    existingUser.avatarUrl = uploaded.url
-    existingUser.avatarPublicId = uploaded.publicId
+    if (payload.file) {
+      const uploaded = await mediaService.uploadImage(payload.file, 'profiles/avatars', `avatar-${existingUser.id}`)
+      await mediaService.destroy(existingUser.avatarPublicId)
+
+      existingUser.avatarUrl = uploaded.url
+      existingUser.avatarPublicId = uploaded.publicId
+    }
+
+    if (typeof payload.caption !== 'undefined') {
+      existingUser.avatarCaption = payload.caption?.trim() ? payload.caption.trim() : null
+    }
+
     await existingUser.save()
 
     return mapProfile(existingUser, await PostModel.countDocuments({ author: existingUser._id }), 'self')
@@ -81,6 +94,8 @@ function mapProfile(user: {
   name: string
   username?: string | null
   bio?: string | null
+  avatarCaption?: string | null
+  createdAt?: Date
   email: string
   avatarUrl?: string | null
   coverUrl?: string | null
@@ -91,6 +106,8 @@ function mapProfile(user: {
     name: user.name,
     username: user.username ?? null,
     bio: user.bio ?? null,
+    avatarCaption: user.avatarCaption ?? null,
+    createdAt: user.createdAt ? user.createdAt.toISOString() : new Date().toISOString(),
     email: user.email,
     avatarUrl: user.avatarUrl ?? null,
     coverUrl: user.coverUrl ?? null,

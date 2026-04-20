@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  Camera,
   Eye,
   EyeOff,
   ImagePlus,
   KeyRound,
   MessageCircle,
   PencilLine,
+  Upload,
   UserPlus,
   UserRoundMinus,
   UserRoundPlus,
@@ -22,6 +22,12 @@ import { FeedSkeleton } from '@/components/feed/feed-skeleton'
 import { Avatar } from '@/components/shared/avatar'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Dialog,
   DialogContent,
@@ -42,8 +48,9 @@ import {
   removeFriend,
   sendFriendRequest,
 } from '@/features/friend/friend-slice'
+import { updateAvatarSchema, type UpdateAvatarValues } from '@/features/profile/avatar-schemas'
 import { updateBioSchema, type UpdateBioValues } from '@/features/profile/profile-schemas'
-import { fetchMyProfile, updateMyProfile, uploadAvatar, uploadCover } from '@/features/profile/profile-slice'
+import { fetchMyProfile, updateAvatarDetails, updateMyProfile, uploadCover } from '@/features/profile/profile-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
 import { authService } from '@/services/auth-service'
@@ -51,6 +58,7 @@ import { feedService } from '@/services/feed-service'
 import { profileService } from '@/services/profile-service'
 import type { FeedPost } from '@/types/post'
 import type { Profile } from '@/types/profile'
+import { formatRelativeDate } from '@/utils/date'
 
 function DefaultCoverArtwork({ name }: { name: string }) {
   const initials = name
@@ -77,6 +85,16 @@ function DefaultCoverArtwork({ name }: { name: string }) {
   )
 }
 
+function formatProfileDateTime(value: string) {
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
 export function ProfilePage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -88,6 +106,10 @@ export function ProfilePage() {
   const [posts, setPosts] = useState<FeedPost[]>([])
   const [isLoadingPosts, setIsLoadingPosts] = useState(true)
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
+  const [isAvatarViewerOpen, setIsAvatarViewerOpen] = useState(false)
+  const [isAvatarEditOpen, setIsAvatarEditOpen] = useState(false)
+  const [avatarDraftFile, setAvatarDraftFile] = useState<File | null>(null)
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [isEditingBio, setIsEditingBio] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -120,6 +142,18 @@ export function ProfilePage() {
     resolver: zodResolver(updateBioSchema),
     defaultValues: {
       bio: '',
+    },
+  })
+
+  const {
+    register: registerAvatar,
+    handleSubmit: handleAvatarSubmit,
+    reset: resetAvatarForm,
+    formState: { errors: avatarErrors },
+  } = useForm<UpdateAvatarValues>({
+    resolver: zodResolver(updateAvatarSchema),
+    defaultValues: {
+      caption: '',
     },
   })
 
@@ -172,8 +206,23 @@ export function ProfilePage() {
     if (isOwnProfile && current) {
       setProfile(current)
       resetBioForm({ bio: current.bio ?? '' })
+      resetAvatarForm({ caption: current.avatarCaption ?? '' })
     }
-  }, [current, isOwnProfile, resetBioForm])
+  }, [current, isOwnProfile, resetAvatarForm, resetBioForm])
+
+  useEffect(() => {
+    if (!avatarDraftFile) {
+      setAvatarPreviewUrl(null)
+      return
+    }
+
+    const nextUrl = URL.createObjectURL(avatarDraftFile)
+    setAvatarPreviewUrl(nextUrl)
+
+    return () => {
+      URL.revokeObjectURL(nextUrl)
+    }
+  }, [avatarDraftFile])
 
   if ((status === 'loading' && isOwnProfile) || !profile) {
     return <FeedSkeleton />
@@ -206,6 +255,22 @@ export function ProfilePage() {
       setProfile(result.payload)
       resetBioForm({ bio: result.payload.bio ?? '' })
       setIsEditingBio(false)
+    }
+  })
+
+  const onSubmitAvatar = handleAvatarSubmit(async (values) => {
+    const result = await dispatch(
+      updateAvatarDetails({
+        file: avatarDraftFile,
+        caption: values.caption?.trim() || null,
+      }),
+    )
+
+    if (updateAvatarDetails.fulfilled.match(result)) {
+      setProfile(result.payload)
+      setAvatarDraftFile(null)
+      setIsAvatarEditOpen(false)
+      resetAvatarForm({ caption: result.payload.avatarCaption ?? '' })
     }
   })
 
@@ -244,38 +309,46 @@ export function ProfilePage() {
               ) : null}
             </div>
 
-            <div className="relative z-10 px-6 pb-6">
-              <div className="-mt-14 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="relative z-10 px-6 pb-6 pt-4">
+              <div className="-mt-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div className="flex items-end gap-4">
-                  <div className="relative h-28 w-28 overflow-hidden rounded-[22px] border-4 border-card bg-secondary shadow-sm">
-                    {profile.avatarUrl ? (
-                      <PhotoView src={profile.avatarUrl}>
-                        <button type="button" className="block h-full w-full cursor-zoom-in">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="group relative h-28 w-28 overflow-hidden rounded-[22px] border-4 border-card bg-secondary shadow-sm"
+                      >
+                        {profile.avatarUrl ? (
                           <img src={profile.avatarUrl} alt={profile.name} className="h-full w-full object-cover" />
-                        </button>
-                      </PhotoView>
-                    ) : (
-                      <Avatar name={profile.name} className="h-full w-full rounded-[18px] text-3xl" />
-                    )}
-                    {isOwnProfile ? (
-                      <label className="absolute bottom-2 right-2 inline-flex cursor-pointer items-center justify-center rounded-full border border-border/70 bg-card p-2 text-card-foreground shadow-sm">
-                        <Camera className="h-4 w-4" />
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp"
-                          className="hidden"
-                          onChange={(event) => {
-                            const file = event.target.files?.[0]
-                            if (file) {
-                              void dispatch(uploadAvatar(file))
-                            }
+                        ) : (
+                          <Avatar name={profile.name} className="h-full w-full rounded-[18px] text-3xl" />
+                        )}
+                        <div className="absolute inset-0 bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/28 group-hover:opacity-100" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" sideOffset={10} className="w-56">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setIsAvatarViewerOpen(true)
+                        }}
+                      >
+                        View profile picture
+                      </DropdownMenuItem>
+                      {isOwnProfile ? (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setAvatarDraftFile(null)
+                            resetAvatarForm({ caption: profile.avatarCaption ?? '' })
+                            setIsAvatarEditOpen(true)
                           }}
-                        />
-                      </label>
-                    ) : null}
-                  </div>
+                        >
+                          {profile.avatarUrl ? 'Edit profile picture' : 'Upload profile picture'}
+                        </DropdownMenuItem>
+                      ) : null}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-                  <div className="pb-2">
+                  <div className="pt-8 sm:pt-10 lg:pb-2">
                     <h2 className="text-3xl font-semibold text-foreground">{profile.name}</h2>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                       {profile.username ? <span>@{profile.username}</span> : null}
@@ -303,6 +376,18 @@ export function ProfilePage() {
                       <Button variant="outline" onClick={() => setIsEditingBio((value) => !value)} disabled={uploadStatus === 'loading'}>
                         {isEditingBio ? <X className="h-4 w-4" /> : <PencilLine className="h-4 w-4" />}
                         {isEditingBio ? 'Cancel edit' : 'Edit bio'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setAvatarDraftFile(null)
+                          resetAvatarForm({ caption: profile.avatarCaption ?? '' })
+                          setIsAvatarEditOpen(true)
+                        }}
+                        disabled={uploadStatus === 'loading'}
+                      >
+                        <Upload className="h-4 w-4" />
+                        Update photo
                       </Button>
                       <Button variant="outline" onClick={() => setIsPasswordDialogOpen(true)} disabled={uploadStatus === 'loading'}>
                         <KeyRound className="h-4 w-4" />
@@ -364,8 +449,7 @@ export function ProfilePage() {
           <Card>
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-foreground">About</p>
-                <p className="mt-1 text-sm text-muted-foreground">A simple profile intro, similar to a lightweight Facebook bio.</p>
+                <p className="text-sm font-semibold text-foreground">A simple profile intro</p>
               </div>
               {!isOwnProfile && profile.avatarUrl ? (
                 <PhotoView src={profile.avatarUrl}>
@@ -423,6 +507,127 @@ export function ProfilePage() {
           )}
         </div>
       </PhotoProvider>
+
+      <Dialog open={isAvatarViewerOpen} onOpenChange={setIsAvatarViewerOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <div className="flex items-center gap-3 pr-8">
+              <Avatar name={profile.name} src={profile.avatarUrl} className="h-11 w-11 rounded-[10px]" />
+              <div>
+                <DialogTitle>{profile.name}</DialogTitle>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formatProfileDateTime(profile.createdAt)} · {formatRelativeDate(profile.createdAt)}
+                </p>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="overflow-hidden rounded-[14px] border border-border/70 bg-secondary/45">
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={profile.name} className="h-auto max-h-[420px] w-full object-cover" />
+              ) : (
+                <div className="grid h-[320px] place-items-center">
+                  <Avatar name={profile.name} className="h-28 w-28 rounded-[22px] text-4xl" />
+                </div>
+              )}
+            </div>
+
+            {profile.avatarCaption ? (
+              <div className="rounded-[12px] border border-border/70 bg-secondary/30 p-4">
+                <p className="text-sm leading-7 text-muted-foreground">{profile.avatarCaption}</p>
+              </div>
+            ) : null}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsAvatarViewerOpen(false)}>
+              Close
+            </Button>
+            {isOwnProfile ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsAvatarViewerOpen(false)
+                  setAvatarDraftFile(null)
+                  resetAvatarForm({ caption: profile.avatarCaption ?? '' })
+                  setIsAvatarEditOpen(true)
+                }}
+              >
+                Edit photo
+              </Button>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isAvatarEditOpen}
+        onOpenChange={(open) => {
+          setIsAvatarEditOpen(open)
+          if (!open) {
+            setAvatarDraftFile(null)
+            resetAvatarForm({ caption: profile.avatarCaption ?? '' })
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{profile.avatarUrl ? 'Edit profile picture' : 'Upload profile picture'}</DialogTitle>
+            <DialogDescription>
+              Update your profile picture and add a short description if you want extra context.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-4" onSubmit={(event) => void onSubmitAvatar(event)}>
+            <div className="overflow-hidden rounded-[14px] border border-border/70 bg-secondary/40">
+              {avatarPreviewUrl || profile.avatarUrl ? (
+                <img
+                  src={avatarPreviewUrl ?? profile.avatarUrl ?? ''}
+                  alt={profile.name}
+                  className="h-auto max-h-[420px] w-full object-cover"
+                />
+              ) : (
+                <div className="grid h-[320px] place-items-center">
+                  <Avatar name={profile.name} className="h-28 w-28 rounded-[22px] text-4xl" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="avatar-caption">Description</Label>
+              <Textarea
+                id="avatar-caption"
+                placeholder="Say something short about this profile picture..."
+                className="min-h-[110px]"
+                {...registerAvatar('caption')}
+              />
+              {avatarErrors.caption ? <p className="text-sm text-destructive">{avatarErrors.caption.message}</p> : null}
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsAvatarEditOpen(false)}>
+                Cancel
+              </Button>
+              <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-[9px] border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground transition hover:bg-accent">
+                <Upload className="h-4 w-4" />
+                {avatarDraftFile ? 'Change selected image' : 'Choose image'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(event) => {
+                    setAvatarDraftFile(event.target.files?.[0] ?? null)
+                  }}
+                />
+              </label>
+              <Button type="submit" disabled={uploadStatus === 'loading'}>
+                {uploadStatus === 'loading' ? 'Saving...' : 'Save changes'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={isPasswordDialogOpen}

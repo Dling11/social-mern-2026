@@ -7,6 +7,10 @@ const updateProfileSchema = z.object({
   bio: z.string().trim().max(180).optional().nullable(),
 })
 
+const updateAvatarSchema = z.object({
+  caption: z.string().trim().max(180).optional().nullable(),
+})
+
 export const profileController = {
   async getMe(request: Request, response: Response) {
     const profile = await profileService.getProfile(request.user!.id, request.user!.id)
@@ -19,11 +23,15 @@ export const profileController = {
   },
 
   async updateAvatar(request: Request, response: Response) {
-    if (!request.file) {
-      throw new ApiError(400, 'Profile image is required.')
+    const payload = updateAvatarSchema.parse(request.body)
+    if (!request.file && typeof payload.caption === 'undefined') {
+      throw new ApiError(400, 'Profile image or caption is required.')
     }
 
-    const profile = await profileService.updateAvatar(request.user!, request.file)
+    const profile = await profileService.updateAvatar(request.user!, {
+      file: request.file,
+      caption: payload.caption,
+    })
     response.status(200).json({ profile })
   },
 
