@@ -131,106 +131,106 @@ export function MainLayout() {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-50 border-b border-border/70 bg-background/92 backdrop-blur-xl">
-          <div className="relative z-50 mx-auto flex w-full max-w-[1720px] flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6 xl:px-7">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">Social Platform</p>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Newsfeed</h1>
-          </div>
+        <header className="sticky top-0 z-40 border-b border-border/70 bg-background/92 backdrop-blur-xl">
+          <div className="relative mx-auto flex w-full max-w-[1720px] flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6 xl:px-7">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">Social Platform</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">Newsfeed</h1>
+            </div>
 
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <form
-              className="hidden min-w-80 items-center gap-3 md:flex"
-              onSubmit={(event) => {
-                event.preventDefault()
-                handleSearchSubmit()
-              }}
-            >
-              <div className="relative z-50 w-full">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  onFocus={() => {
-                    if (searchResults.length > 0 || searchQuery.trim().length >= 2) {
-                      setIsSearchOpen(true)
-                    }
-                  }}
-                  onBlur={() => {
-                    window.setTimeout(() => setIsSearchOpen(false), 140)
-                  }}
-                  className="rounded-full pl-10"
-                  placeholder="Search people and profiles"
-                />
-                {isSearchOpen && searchQuery.trim().length >= 2 ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+0.65rem)] z-[80] overflow-hidden rounded-[10px] border border-border/80 bg-card shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
-                    <div className="border-b border-border/70 px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                      {isSearchLoading ? 'Searching...' : 'People'}
-                    </div>
-                    <div className="max-h-80 overflow-y-auto py-2">
-                      {!isSearchLoading && searchResults.length > 0 ? (
-                        searchResults.map((result) => (
+            <div className="flex flex-1 items-center justify-end gap-3">
+              <form
+                className="hidden min-w-80 items-center gap-3 md:flex"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  handleSearchSubmit()
+                }}
+              >
+                <div className="relative z-50 w-full">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    onFocus={() => {
+                      if (searchResults.length > 0 || searchQuery.trim().length >= 2) {
+                        setIsSearchOpen(true)
+                      }
+                    }}
+                    onBlur={() => {
+                      window.setTimeout(() => setIsSearchOpen(false), 140)
+                    }}
+                    className="rounded-full pl-10"
+                    placeholder="Search people and profiles"
+                  />
+                  {isSearchOpen && searchQuery.trim().length >= 2 ? (
+                    <div className="absolute left-0 right-0 top-[calc(100%+0.65rem)] z-[70] overflow-hidden rounded-[10px] border border-border/80 bg-card shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
+                      <div className="border-b border-border/70 px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                        {isSearchLoading ? 'Searching...' : 'People'}
+                      </div>
+                      <div className="max-h-80 overflow-y-auto py-2">
+                        {!isSearchLoading && searchResults.length > 0 ? (
+                          searchResults.map((result) => (
+                            <button
+                              key={result.id}
+                              type="button"
+                              className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition hover:bg-accent"
+                              onClick={() => handleSelectUser(result.id)}
+                            >
+                              <Avatar name={result.name} src={result.avatarUrl} className="h-11 w-11 rounded-[10px]" />
+                              <div className="min-w-0">
+                                <p className="truncate font-medium text-foreground">{result.name}</p>
+                                <p className="truncate text-sm text-muted-foreground">
+                                  {result.username ? `@${result.username}` : result.email}
+                                </p>
+                              </div>
+                            </button>
+                          ))
+                        ) : null}
+                        {!isSearchLoading && searchResults.length === 0 ? (
+                          <div className="px-4 py-4 text-sm text-muted-foreground">No matching users found.</div>
+                        ) : null}
+                        {!isSearchLoading && searchResults.length > 0 ? (
                           <button
-                            key={result.id}
                             type="button"
-                            className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition hover:bg-accent"
-                            onClick={() => handleSelectUser(result.id)}
+                            className="w-full cursor-pointer border-t border-border/70 px-4 py-3 text-left text-sm font-medium text-primary transition hover:bg-accent"
+                            onClick={handleSearchSubmit}
                           >
-                            <Avatar name={result.name} src={result.avatarUrl} className="h-11 w-11 rounded-[10px]" />
-                            <div className="min-w-0">
-                              <p className="truncate font-medium text-foreground">{result.name}</p>
-                              <p className="truncate text-sm text-muted-foreground">
-                                {result.username ? `@${result.username}` : result.email}
-                              </p>
-                            </div>
+                            See all results for "{searchQuery.trim()}"
                           </button>
-                        ))
-                      ) : null}
-                      {!isSearchLoading && searchResults.length === 0 ? (
-                        <div className="px-4 py-4 text-sm text-muted-foreground">No matching users found.</div>
-                      ) : null}
-                      {!isSearchLoading && searchResults.length > 0 ? (
-                        <button
-                          type="button"
-                          className="w-full cursor-pointer border-t border-border/70 px-4 py-3 text-left text-sm font-medium text-primary transition hover:bg-accent"
-                          onClick={handleSearchSubmit}
-                        >
-                          See all results for "{searchQuery.trim()}"
-                        </button>
-                      ) : null}
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-              </div>
-            </form>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="relative">
-                  <Bell className="h-4 w-4" />
-                  {unreadCount > 0 ? (
-                    <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-center text-[10px] font-semibold text-primary-foreground">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
                   ) : null}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[24rem] p-0">
-                <NotificationPanel />
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </div>
+              </form>
 
-            <ThemeToggle />
-            <Button variant="outline" onClick={() => void dispatch(logout())}>
-              Logout
-            </Button>
-          </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
+                    <Bell className="h-4 w-4" />
+                    {unreadCount > 0 ? (
+                      <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-center text-[10px] font-semibold text-primary-foreground">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    ) : null}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[24rem] p-0">
+                  <NotificationPanel />
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <ThemeToggle />
+              <Button variant="outline" onClick={() => void dispatch(logout())}>
+                Logout
+              </Button>
+            </div>
           </div>
         </header>
 
         <div className="mx-auto grid w-full max-w-[1720px] gap-5 px-5 py-4 sm:px-6 xl:grid-cols-[300px_minmax(0,1fr)_340px] xl:px-7">
           <Card className="hidden h-fit self-start overflow-hidden p-0 xl:sticky xl:top-[5rem] xl:block">
-            <CardHeader className="rounded-t-[1.8rem] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_44%),linear-gradient(135deg,rgba(59,130,246,0.08),rgba(16,185,129,0.04))] px-5 py-5">
+            <CardHeader className="border-b border-border/70 bg-secondary/65 px-5 py-5">
               <div className="flex items-center gap-3">
                 <Avatar name={user?.name ?? 'You'} src={user?.avatarUrl} className="h-14 w-14 ring-4 ring-background" />
                 <div>

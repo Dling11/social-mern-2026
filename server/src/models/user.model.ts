@@ -6,6 +6,7 @@ export interface UserDocument {
   lastName: string
   middleName?: string | null
   username?: string | null
+  bio?: string | null
   email: string
   password: string
   role: 'user' | 'admin'
@@ -57,6 +58,12 @@ const userSchema = new Schema<UserDocument>(
       trim: true,
       minlength: 3,
       maxlength: 30,
+      default: null,
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 180,
       default: null,
     },
     email: {

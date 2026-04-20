@@ -143,9 +143,11 @@ function mapUser(user: {
   lastName?: string
   middleName?: string | null
   username?: string | null
+  bio?: string | null
   email: string
   role: 'user' | 'admin'
   avatarUrl?: string | null
+  coverUrl?: string | null
 }): AuthenticatedUser {
   return {
     id: user.id,
@@ -154,8 +156,10 @@ function mapUser(user: {
     lastName: user.lastName,
     middleName: user.middleName ?? null,
     username: user.username ?? null,
+    bio: user.bio ?? null,
     email: user.email,
     role: user.role,
     avatarUrl: user.avatarUrl ?? null,
+    coverUrl: user.coverUrl ?? null,
   }
 }

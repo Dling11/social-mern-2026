@@ -9,6 +9,8 @@ import { friendService } from './friend.service'
 export interface ProfileResponse {
   id: string
   name: string
+  username?: string | null
+  bio?: string | null
   email: string
   avatarUrl?: string | null
   coverUrl?: string | null
@@ -60,11 +62,25 @@ export const profileService = {
 
     return mapProfile(existingUser, await PostModel.countDocuments({ author: existingUser._id }), 'self')
   },
+
+  async updateProfile(user: AuthenticatedUser, payload: { bio?: string | null }) {
+    const existingUser = await UserModel.findById(user.id)
+    if (!existingUser) {
+      throw new ApiError(404, 'Profile not found.')
+    }
+
+    existingUser.bio = payload.bio?.trim() ? payload.bio.trim() : null
+    await existingUser.save()
+
+    return mapProfile(existingUser, await PostModel.countDocuments({ author: existingUser._id }), 'self')
+  },
 }
 
 function mapProfile(user: {
   id: string
   name: string
+  username?: string | null
+  bio?: string | null
   email: string
   avatarUrl?: string | null
   coverUrl?: string | null
@@ -73,6 +89,8 @@ function mapProfile(user: {
   return {
     id: user.id,
     name: user.name,
+    username: user.username ?? null,
+    bio: user.bio ?? null,
     email: user.email,
     avatarUrl: user.avatarUrl ?? null,
     coverUrl: user.coverUrl ?? null,

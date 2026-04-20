@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { MessageCircle, Send, ThumbsUp } from 'lucide-react'
+import { PhotoProvider, PhotoView } from 'react-photo-view'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { Avatar } from '@/components/shared/avatar'
@@ -33,7 +34,8 @@ export function PostCard({ post }: { post: FeedPost }) {
   })
 
   return (
-    <Card className="space-y-5">
+    <PhotoProvider maskOpacity={0.72}>
+      <Card className="space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link to={`/profile/${post.author.id}`}>
@@ -54,7 +56,11 @@ export function PostCard({ post }: { post: FeedPost }) {
       <p className="text-sm leading-7 text-foreground">{post.content}</p>
       {post.imageUrl ? (
         <div className="overflow-hidden rounded-[24px] border border-border">
-          <img src={post.imageUrl} alt="Post attachment" className="h-auto max-h-[520px] w-full object-cover" />
+          <PhotoView src={post.imageUrl}>
+            <button type="button" className="block w-full cursor-zoom-in">
+              <img src={post.imageUrl} alt="Post attachment" className="h-auto max-h-[520px] w-full object-cover" />
+            </button>
+          </PhotoView>
         </div>
       ) : null}
 
@@ -104,6 +110,7 @@ export function PostCard({ post }: { post: FeedPost }) {
         </div>
         {errors.content ? <p className="text-sm text-destructive">{errors.content.message}</p> : null}
       </form>
-    </Card>
+      </Card>
+    </PhotoProvider>
   )
 }

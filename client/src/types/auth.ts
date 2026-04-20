@@ -5,6 +5,7 @@ export interface AuthUser {
   lastName?: string
   middleName?: string | null
   username?: string | null
+  bio?: string | null
   email: string
   role: 'user' | 'admin'
   avatarUrl?: string | null

@@ -26,45 +26,45 @@
 }
 
 :root {
-  --background: 210 22% 98%;
-  --foreground: 222 38% 12%;
+  --background: 28 30% 97%;
+  --foreground: 20 24% 14%;
   --card: 0 0% 100%;
-  --card-foreground: 222 38% 12%;
+  --card-foreground: 20 24% 14%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 38% 12%;
-  --primary: 217 84% 55%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 30% 96%;
-  --secondary-foreground: 222 47% 14%;
-  --muted: 210 26% 96%;
-  --muted-foreground: 215 14% 43%;
-  --accent: 214 100% 97%;
-  --accent-foreground: 222 47% 14%;
+  --popover-foreground: 20 24% 14%;
+  --primary: 24 82% 58%;
+  --primary-foreground: 24 35% 98%;
+  --secondary: 28 34% 94%;
+  --secondary-foreground: 20 24% 16%;
+  --muted: 28 24% 95%;
+  --muted-foreground: 24 10% 42%;
+  --accent: 28 64% 95%;
+  --accent-foreground: 20 24% 16%;
   --destructive: 0 84% 60%;
-  --border: 214 24% 89%;
-  --input: 214 24% 89%;
-  --ring: 217 84% 55%;
+  --border: 26 24% 86%;
+  --input: 26 24% 86%;
+  --ring: 24 82% 58%;
 }
 
 .dark {
-  --background: 222 47% 8%;
-  --foreground: 210 40% 96%;
-  --card: 223 42% 11%;
-  --card-foreground: 210 40% 96%;
-  --popover: 223 42% 11%;
-  --popover-foreground: 210 40% 96%;
-  --primary: 213 94% 68%;
-  --primary-foreground: 222 47% 11%;
-  --secondary: 217 33% 17%;
-  --secondary-foreground: 210 40% 96%;
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 217 33% 17%;
-  --accent-foreground: 210 40% 96%;
+  --background: 20 18% 8%;
+  --foreground: 32 32% 94%;
+  --card: 20 16% 11%;
+  --card-foreground: 32 32% 94%;
+  --popover: 20 16% 11%;
+  --popover-foreground: 32 32% 94%;
+  --primary: 26 90% 66%;
+  --primary-foreground: 20 24% 10%;
+  --secondary: 20 14% 17%;
+  --secondary-foreground: 32 32% 94%;
+  --muted: 20 14% 17%;
+  --muted-foreground: 28 14% 67%;
+  --accent: 20 14% 17%;
+  --accent-foreground: 32 32% 94%;
   --destructive: 0 63% 48%;
-  --border: 217 33% 20%;
-  --input: 217 33% 20%;
-  --ring: 213 94% 68%;
+  --border: 20 14% 22%;
+  --input: 20 14% 22%;
+  --ring: 26 90% 66%;
 }
 
 * {

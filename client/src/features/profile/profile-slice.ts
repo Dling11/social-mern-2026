@@ -50,6 +50,19 @@ export const uploadCover = createAsyncThunk(
   },
 )
 
+export const updateMyProfile = createAsyncThunk(
+  'profile/updateMyProfile',
+  async (payload: { bio?: string | null }, { dispatch, rejectWithValue }) => {
+    try {
+      const profile = await profileService.updateMyProfile(payload)
+      dispatch(setAuthUser(profile))
+      return profile
+    } catch (error) {
+      return rejectWithValue(profileService.getErrorMessage(error))
+    }
+  },
+)
+
 const profileSlice = createSlice({
   name: 'profile',
   initialState,
@@ -90,6 +103,18 @@ const profileSlice = createSlice({
       .addCase(uploadCover.rejected, (state, action) => {
         state.uploadStatus = 'failed'
         toast.error((action.payload as string) ?? 'Unable to update your cover photo.')
+      })
+      .addCase(updateMyProfile.pending, (state) => {
+        state.uploadStatus = 'loading'
+      })
+      .addCase(updateMyProfile.fulfilled, (state, action) => {
+        state.uploadStatus = 'idle'
+        state.current = action.payload
+        toast.success('Profile updated.')
+      })
+      .addCase(updateMyProfile.rejected, (state, action) => {
+        state.uploadStatus = 'failed'
+        toast.error((action.payload as string) ?? 'Unable to update your profile.')
       })
   },
 })

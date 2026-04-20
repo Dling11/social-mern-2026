@@ -28,6 +28,10 @@ export const profileService = {
     const { data } = await apiClient.post<ProfileResponse>(`${PROFILE_BASE}/me/cover`, formData)
     return data.profile
   },
+  async updateMyProfile(payload: { bio?: string | null }): Promise<Profile> {
+    const { data } = await apiClient.patch<ProfileResponse>(`${PROFILE_BASE}/me`, payload)
+    return data.profile
+  },
   getErrorMessage(error: unknown): string {
     const axiosError = error as AxiosError<ApiErrorResponse>
     return axiosError.response?.data?.message ?? 'Something went wrong. Please try again.'
