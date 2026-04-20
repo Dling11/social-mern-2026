@@ -10,6 +10,7 @@ export interface PostCommentDocument {
 
 export interface PostDocument {
   author: Types.ObjectId
+  type: 'standard' | 'avatar_update'
   content: string
   imageUrl?: string | null
   imagePublicId?: string | null
@@ -45,6 +46,11 @@ const postSchema = new Schema<PostDocument>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+    },
+    type: {
+      type: String,
+      enum: ['standard', 'avatar_update'],
+      default: 'standard',
     },
     content: {
       type: String,

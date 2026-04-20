@@ -5,6 +5,7 @@ import type { AuthenticatedUser } from '../types/user'
 import { ApiError } from '../utils/api-error'
 import { mediaService } from './media.service'
 import { friendService } from './friend.service'
+import { postService } from './post.service'
 
 export interface ProfileResponse {
   id: string
@@ -45,6 +46,7 @@ export const profileService = {
 
     if (payload.file) {
       const previousAvatarPublicId = existingUser.avatarPublicId
+      const nextCaption = typeof payload.caption !== 'undefined' ? payload.caption?.trim() || null : existingUser.avatarCaption ?? null
       const uploaded = await mediaService.uploadImage(
         payload.file,
         'profiles/avatars',
@@ -52,11 +54,16 @@ export const profileService = {
       )
       existingUser.avatarUrl = uploaded.url
       existingUser.avatarPublicId = uploaded.publicId
+      existingUser.avatarCaption = nextCaption
       await existingUser.save()
       await mediaService.destroy(previousAvatarPublicId)
+      await postService.createAvatarUpdatePost(user, {
+        caption: nextCaption,
+        image: payload.file,
+      })
     }
 
-    if (typeof payload.caption !== 'undefined') {
+    if (!payload.file && typeof payload.caption !== 'undefined') {
       existingUser.avatarCaption = payload.caption?.trim() ? payload.caption.trim() : null
     }
 

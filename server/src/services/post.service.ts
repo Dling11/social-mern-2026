@@ -55,9 +55,35 @@ export const postService = {
 
     const post = await PostModel.create({
       author: new Types.ObjectId(user.id),
+      type: 'standard',
       content: payload.content,
       imageUrl: uploadedImage?.url ?? null,
       imagePublicId: uploadedImage?.publicId ?? null,
+      likes: [],
+      comments: [],
+    })
+
+    const populatedPost = await PostModel.findById(post._id).populate(FEED_POPULATE)
+    if (!populatedPost) {
+      throw new ApiError(404, 'Post could not be loaded after creation.')
+    }
+
+    return mapPost(populatedPost, user.id)
+  },
+
+  async createAvatarUpdatePost(user: AuthenticatedUser, payload: { caption?: string | null; image: Express.Multer.File }) {
+    const uploadedImage = await mediaService.uploadImage(
+      payload.image,
+      'posts',
+      `avatar-post-${user.id}-${Date.now()}`,
+    )
+
+    const post = await PostModel.create({
+      author: new Types.ObjectId(user.id),
+      type: 'avatar_update',
+      content: payload.caption?.trim() || 'Updated profile picture.',
+      imageUrl: uploadedImage.url,
+      imagePublicId: uploadedImage.publicId,
       likes: [],
       comments: [],
     })
@@ -150,6 +176,7 @@ function mapPost(post: any, currentUserId: string): FeedPost {
 
   return {
     id: post.id,
+    type: post.type ?? 'standard',
     content: post.content,
     imageUrl: post.imageUrl ?? null,
     createdAt: post.createdAt.toISOString(),

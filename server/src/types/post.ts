@@ -14,6 +14,7 @@ export interface FeedComment {
 
 export interface FeedPost {
   id: string
+  type: 'standard' | 'avatar_update'
   content: string
   imageUrl?: string | null
   createdAt: string
