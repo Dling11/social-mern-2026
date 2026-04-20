@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod'
+﻿import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Eye,
   EyeOff,
@@ -53,6 +53,7 @@ import { updateBioSchema, type UpdateBioValues } from '@/features/profile/profil
 import { fetchMyProfile, updateAvatarDetails, updateMyProfile, uploadCover } from '@/features/profile/profile-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
+import { useFeedSocket } from '@/hooks/use-feed-socket'
 import { authService } from '@/services/auth-service'
 import { feedService } from '@/services/feed-service'
 import { profileService } from '@/services/profile-service'
@@ -118,6 +119,37 @@ export function ProfilePage() {
 
   const activeUserId = userId ?? authUser?.id ?? ''
   const isOwnProfile = !userId || userId === authUser?.id
+
+  useFeedSocket({
+    onNewPost: (post) => {
+      if (post.author.id !== activeUserId) {
+        return
+      }
+
+      const alreadyExists = posts.some((entry) => entry.id === post.id)
+
+      setPosts((currentPosts) => {
+        const nextPosts = alreadyExists ? currentPosts.filter((entry) => entry.id !== post.id) : currentPosts
+        return [post, ...nextPosts]
+      })
+
+      setProfile((currentProfile) =>
+        currentProfile && currentProfile.id === activeUserId && !alreadyExists
+          ? {
+              ...currentProfile,
+              postCount: currentProfile.postCount + 1,
+            }
+          : currentProfile,
+      )
+    },
+    onUpdatedPost: (post) => {
+      if (post.author.id !== activeUserId) {
+        return
+      }
+
+      setPosts((currentPosts) => currentPosts.map((entry) => (entry.id === post.id ? post : entry)))
+    },
+  })
 
   const {
     register: registerPassword,
@@ -731,3 +763,5 @@ export function ProfilePage() {
     </>
   )
 }
+
+

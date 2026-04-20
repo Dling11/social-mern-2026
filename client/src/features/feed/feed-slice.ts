@@ -59,7 +59,14 @@ export const addComment = createAsyncThunk(
 const feedSlice = createSlice({
   name: 'feed',
   initialState,
-  reducers: {},
+  reducers: {
+    upsertFeedPost(state, action: { payload: FeedPost }) {
+      insertOrReplacePost(state.posts, action.payload)
+    },
+    replaceFeedPost(state, action: { payload: FeedPost }) {
+      state.posts = state.posts.map((post) => (post.id === action.payload.id ? action.payload : post))
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchFeed.pending, (state) => {
@@ -78,7 +85,7 @@ const feedSlice = createSlice({
       })
       .addCase(createPost.fulfilled, (state, action) => {
         state.createStatus = 'idle'
-        state.posts.unshift(action.payload)
+        insertOrReplacePost(state.posts, action.payload)
         toast.success('Post published.')
       })
       .addCase(createPost.rejected, (state, action) => {
@@ -101,4 +108,14 @@ const feedSlice = createSlice({
   },
 })
 
+function insertOrReplacePost(posts: FeedPost[], incomingPost: FeedPost) {
+  const existingIndex = posts.findIndex((post) => post.id === incomingPost.id)
+  if (existingIndex >= 0) {
+    posts.splice(existingIndex, 1)
+  }
+
+  posts.unshift(incomingPost)
+}
+
+export const { replaceFeedPost, upsertFeedPost } = feedSlice.actions
 export default feedSlice.reducer

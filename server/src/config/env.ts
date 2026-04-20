@@ -17,6 +17,11 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   MAX_FILE_SIZE_MB: z.coerce.number().default(5),
   ADMIN_EMAILS: z.string().optional(),
+  ENABLE_ADMIN_BOOTSTRAP: z
+    .enum(['true', 'false'])
+    .optional()
+    .default('false')
+    .transform((value) => value === 'true'),
   ADMIN_BOOTSTRAP_EMAIL: z.string().email().optional(),
   ADMIN_BOOTSTRAP_PASSWORD: z.string().min(6).optional(),
 })

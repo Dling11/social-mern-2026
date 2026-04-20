@@ -86,6 +86,19 @@ const messageSlice = createSlice({
     setTypingUsers(state, action: { payload: { conversationId: string; users: Array<{ userId: string; name: string }> } }) {
       state.typingByConversation[action.payload.conversationId] = action.payload.users
     },
+    typingStarted(state, action: { payload: { conversationId: string; user: { id: string; name: string } } }) {
+      const { conversationId, user } = action.payload
+      const current = state.typingByConversation[conversationId] ?? []
+      state.typingByConversation[conversationId] = [
+        ...current.filter((entry) => entry.userId !== user.id),
+        { userId: user.id, name: user.name },
+      ]
+    },
+    typingStopped(state, action: { payload: { conversationId: string; userId: string } }) {
+      const { conversationId, userId } = action.payload
+      const current = state.typingByConversation[conversationId] ?? []
+      state.typingByConversation[conversationId] = current.filter((entry) => entry.userId !== userId)
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -140,5 +153,6 @@ function updateConversationPreview(conversations: ConversationSummary[], message
   }
 }
 
-export const { receiveMessage, setActiveConversation, setTypingUsers, updateMessageStatus } = messageSlice.actions
+export const { receiveMessage, setActiveConversation, setTypingUsers, typingStarted, typingStopped, updateMessageStatus } =
+  messageSlice.actions
 export default messageSlice.reducer

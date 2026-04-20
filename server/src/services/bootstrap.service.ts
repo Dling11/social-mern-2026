@@ -4,6 +4,10 @@ import { UserModel } from '../models/user.model'
 
 export const bootstrapService = {
   async ensureAdminUser() {
+    if (!env.ENABLE_ADMIN_BOOTSTRAP || env.NODE_ENV === 'production') {
+      return
+    }
+
     if (!env.ADMIN_BOOTSTRAP_EMAIL || !env.ADMIN_BOOTSTRAP_PASSWORD) {
       return
     }

@@ -7,10 +7,13 @@ import { Card } from '@/components/ui/card'
 import { fetchFeed } from '@/features/feed/feed-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
+import { useFeedSocket } from '@/hooks/use-feed-socket'
 
 export function FeedPage() {
   const dispatch = useAppDispatch()
   const { posts, status } = useAppSelector((state) => state.feed)
+
+  useFeedSocket()
 
   useEffect(() => {
     void dispatch(fetchFeed())

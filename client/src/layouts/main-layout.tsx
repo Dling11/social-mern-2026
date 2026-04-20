@@ -22,10 +22,10 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { logout } from '@/features/auth/auth-slice'
 import { fetchFriendLists } from '@/features/friend/friend-slice'
-import { fetchNotifications, receiveNotification } from '@/features/notification/notification-slice'
+import { fetchNotifications } from '@/features/notification/notification-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
-import { getSocket } from '@/services/socket-service'
+import { useNotificationSocket } from '@/hooks/use-notification-socket'
 import { userService } from '@/services/user-service'
 import type { AuthUser } from '@/types/auth'
 import { cn } from '@/utils/cn'
@@ -48,6 +48,8 @@ export function MainLayout() {
   const [searchResults, setSearchResults] = useState<AuthUser[]>([])
   const [isSearchLoading, setIsSearchLoading] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  useNotificationSocket()
 
   useEffect(() => {
     void dispatch(fetchFriendLists())
@@ -115,18 +117,6 @@ export function MainLayout() {
     setSearchResults([])
     navigate(`/profile/${userId}`)
   }
-
-  useEffect(() => {
-    const socket = getSocket()
-    const handleNotification = (notification: any) => {
-      dispatch(receiveNotification(notification))
-    }
-
-    socket.on('notification:new', handleNotification)
-    return () => {
-      socket.off('notification:new', handleNotification)
-    }
-  }, [dispatch])
 
   return (
     <div className="min-h-screen bg-background">

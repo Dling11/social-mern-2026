@@ -4,6 +4,7 @@ import { UserModel } from '../models/user.model'
 import type { AuthenticatedUser } from '../types/user'
 import type { FeedAuthor, FeedComment, FeedPost } from '../types/post'
 import { ApiError } from '../utils/api-error'
+import { getIo } from '../socket'
 import { mediaService } from './media.service'
 import { notificationService } from './notification.service'
 
@@ -68,7 +69,9 @@ export const postService = {
       throw new ApiError(404, 'Post could not be loaded after creation.')
     }
 
-    return mapPost(populatedPost, user.id)
+    const mappedPost = mapPost(populatedPost, user.id)
+    getIo().emit('feed:post:new', mappedPost)
+    return mappedPost
   },
 
   async createAvatarUpdatePost(user: AuthenticatedUser, payload: { caption?: string | null; image: Express.Multer.File }) {
@@ -93,7 +96,9 @@ export const postService = {
       throw new ApiError(404, 'Post could not be loaded after creation.')
     }
 
-    return mapPost(populatedPost, user.id)
+    const mappedPost = mapPost(populatedPost, user.id)
+    getIo().emit('feed:post:new', mappedPost)
+    return mappedPost
   },
 
   async toggleLike(postId: string, user: AuthenticatedUser) {
@@ -131,7 +136,9 @@ export const postService = {
       throw new ApiError(404, 'Post not found.')
     }
 
-    return mapPost(populatedPost, user.id)
+    const mappedPost = mapPost(populatedPost, user.id)
+    getIo().emit('feed:post:updated', mappedPost)
+    return mappedPost
   },
 
   async addComment(postId: string, user: AuthenticatedUser, payload: AddCommentPayload) {
@@ -166,7 +173,9 @@ export const postService = {
       throw new ApiError(404, 'Post not found.')
     }
 
-    return mapPost(populatedPost, user.id)
+    const mappedPost = mapPost(populatedPost, user.id)
+    getIo().emit('feed:post:updated', mappedPost)
+    return mappedPost
   },
 }
 

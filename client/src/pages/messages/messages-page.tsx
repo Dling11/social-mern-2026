@@ -9,18 +9,10 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { fetchFriendLists } from '@/features/friend/friend-slice'
-import {
-  fetchConversations,
-  fetchMessages,
-  openConversation,
-  receiveMessage,
-  sendMessage,
-  setActiveConversation,
-  setTypingUsers,
-  updateMessageStatus,
-} from '@/features/message/message-slice'
+import { fetchConversations, fetchMessages, openConversation, sendMessage, setActiveConversation } from '@/features/message/message-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
+import { useMessageSocket } from '@/hooks/use-message-socket'
 import { messageService } from '@/services/message-service'
 import { getSocket } from '@/services/socket-service'
 import type { AuthUser } from '@/types/auth'
@@ -43,6 +35,8 @@ export function MessagesPage() {
   const [text, setText] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const [conversationSearch, setConversationSearch] = useState('')
+
+  useMessageSocket()
 
   useEffect(() => {
     void dispatch(fetchConversations())
@@ -77,43 +71,14 @@ export function MessagesPage() {
 
   useEffect(() => {
     const socket = getSocket()
-
-    const handleMessage = (message: any) => {
-      dispatch(receiveMessage(message))
-    }
-    const handleStartTyping = (payload: any) => {
-      const current = typingByConversation[payload.conversationId] ?? []
-      const next = [...current.filter((entry) => entry.userId !== payload.user.id), { userId: payload.user.id, name: payload.user.name }]
-      dispatch(setTypingUsers({ conversationId: payload.conversationId, users: next }))
-    }
-    const handleStopTyping = (payload: any) => {
-      const current = typingByConversation[payload.conversationId] ?? []
-      dispatch(setTypingUsers({ conversationId: payload.conversationId, users: current.filter((entry) => entry.userId !== payload.userId) }))
-    }
-    const handleStatus = (payload: any) => {
-      dispatch(updateMessageStatus(payload))
+    if (!activeConversationId) {
+      return
     }
 
-    socket.on('message:new', handleMessage)
-    socket.on('typing:start', handleStartTyping)
-    socket.on('typing:stop', handleStopTyping)
-    socket.on('message:status', handleStatus)
+    socket.emit('conversation:join', activeConversationId)
 
     return () => {
-      socket.off('message:new', handleMessage)
-      socket.off('typing:start', handleStartTyping)
-      socket.off('typing:stop', handleStopTyping)
-      socket.off('message:status', handleStatus)
-    }
-  }, [dispatch, typingByConversation])
-
-  useEffect(() => {
-    const socket = getSocket()
-    if (activeConversationId) {
-      socket.emit('conversation:join', activeConversationId)
-      return () => {
-        socket.emit('conversation:leave', activeConversationId)
-      }
+      socket.emit('conversation:leave', activeConversationId)
     }
   }, [activeConversationId])
 
@@ -343,10 +308,8 @@ export function MessagesPage() {
                 </div>
                 <p className="text-xl font-semibold text-foreground">Your inbox is ready</p>
                 <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                  Start by choosing a recent conversation on the left, or click one of your friends under
-                  {' '}
-                  <span className="font-medium text-foreground">Start with friends</span>
-                  .
+                  Start by choosing a recent conversation on the left, or click one of your friends under{' '}
+                  <span className="font-medium text-foreground">Start with friends</span>.
                 </p>
               </div>
             </div>
@@ -411,15 +374,8 @@ export function MessagesPage() {
             </div>
 
             <p className="mt-3 text-xs text-muted-foreground">
-              Press
-              {' '}
-              <span className="font-medium text-foreground">Enter</span>
-              {' '}
-              to send, or
-              {' '}
-              <span className="font-medium text-foreground">Shift + Enter</span>
-              {' '}
-              for a new line.
+              Press <span className="font-medium text-foreground">Enter</span> to send, or{' '}
+              <span className="font-medium text-foreground">Shift + Enter</span> for a new line.
             </p>
           </div>
         </div>
