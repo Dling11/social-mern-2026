@@ -44,18 +44,25 @@ export const profileService = {
     }
 
     if (payload.file) {
-      const uploaded = await mediaService.uploadImage(payload.file, 'profiles/avatars', `avatar-${existingUser.id}`)
-      await mediaService.destroy(existingUser.avatarPublicId)
-
+      const previousAvatarPublicId = existingUser.avatarPublicId
+      const uploaded = await mediaService.uploadImage(
+        payload.file,
+        'profiles/avatars',
+        `avatar-${existingUser.id}-${Date.now()}`,
+      )
       existingUser.avatarUrl = uploaded.url
       existingUser.avatarPublicId = uploaded.publicId
+      await existingUser.save()
+      await mediaService.destroy(previousAvatarPublicId)
     }
 
     if (typeof payload.caption !== 'undefined') {
       existingUser.avatarCaption = payload.caption?.trim() ? payload.caption.trim() : null
     }
 
-    await existingUser.save()
+    if (!payload.file || typeof payload.caption !== 'undefined') {
+      await existingUser.save()
+    }
 
     return mapProfile(existingUser, await PostModel.countDocuments({ author: existingUser._id }), 'self')
   },
@@ -66,12 +73,12 @@ export const profileService = {
       throw new ApiError(404, 'Profile not found.')
     }
 
-    const uploaded = await mediaService.uploadImage(file, 'profiles/covers', `cover-${existingUser.id}`)
-    await mediaService.destroy(existingUser.coverPublicId)
-
+    const previousCoverPublicId = existingUser.coverPublicId
+    const uploaded = await mediaService.uploadImage(file, 'profiles/covers', `cover-${existingUser.id}-${Date.now()}`)
     existingUser.coverUrl = uploaded.url
     existingUser.coverPublicId = uploaded.publicId
     await existingUser.save()
+    await mediaService.destroy(previousCoverPublicId)
 
     return mapProfile(existingUser, await PostModel.countDocuments({ author: existingUser._id }), 'self')
   },

@@ -32,7 +32,10 @@ export const profileService = {
       formData.append('caption', payload.caption ?? '')
     }
 
-    const { data } = await apiClient.patch<ProfileResponse>(`${PROFILE_BASE}/me/avatar`, formData)
+    const { data } = payload.file
+      ? await apiClient.post<ProfileResponse>(`${PROFILE_BASE}/me/avatar`, formData)
+      : await apiClient.patch<ProfileResponse>(`${PROFILE_BASE}/me/avatar`, formData)
+
     return data.profile
   },
   async uploadCover(file: File): Promise<Profile> {
