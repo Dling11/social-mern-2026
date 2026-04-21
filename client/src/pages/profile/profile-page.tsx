@@ -6,17 +6,19 @@ import {
   KeyRound,
   MessageCircle,
   PencilLine,
+  Send,
   Upload,
   UserPlus,
   UserRoundMinus,
   UserRoundPlus,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useNavigate, useParams } from 'react-router-dom'
+import { CreatePostCard } from '@/components/feed/create-post-card'
 import { PostCard } from '@/components/feed/post-card'
 import { FeedSkeleton } from '@/components/feed/feed-skeleton'
 import { Avatar } from '@/components/shared/avatar'
@@ -71,14 +73,13 @@ function DefaultCoverArtwork({ name }: { name: string }) {
     .toUpperCase()
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-secondary">
-      <div className="absolute left-6 top-6 h-24 w-24 rounded-[22px] border border-primary/18 bg-background/50" />
-      <div className="absolute bottom-6 left-20 h-12 w-40 rounded-[14px] border border-border/80 bg-background/55" />
-      <div className="absolute right-8 top-8 h-16 w-28 rounded-[16px] border border-border/80 bg-background/55" />
-      <div className="absolute bottom-8 right-8 h-28 w-28 rounded-full border border-primary/16 bg-background/45" />
-      <div className="absolute inset-x-0 bottom-0 h-20 border-t border-border/70 bg-background/25" />
+    <div className="absolute inset-0 overflow-hidden bg-[#f7f2ec]">
+      <div className="absolute inset-x-0 top-0 h-full bg-[linear-gradient(180deg,rgba(255,255,255,0.34),transparent_58%)]" />
+      <div className="absolute left-8 top-8 h-14 w-14 rounded-[12px] border border-[#dfcdbd] bg-white/55" />
+      <div className="absolute right-8 top-8 h-10 w-24 rounded-[10px] border border-[#e4d5c7] bg-white/50" />
+      <div className="absolute bottom-0 left-0 right-0 h-20 border-t border-[#e3d5c8] bg-white/40" />
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="grid h-20 w-20 place-items-center rounded-[18px] border border-primary/20 bg-background/80 text-2xl font-semibold text-primary shadow-sm">
+        <div className="grid h-18 w-18 place-items-center rounded-[16px] border border-[#dcb894] bg-white/88 text-2xl font-semibold text-[#bc7236] shadow-[0_14px_30px_rgba(120,72,38,0.08)]">
           {initials}
         </div>
       </div>
@@ -111,6 +112,8 @@ export function ProfilePage() {
   const [isAvatarEditOpen, setIsAvatarEditOpen] = useState(false)
   const [avatarDraftFile, setAvatarDraftFile] = useState<File | null>(null)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
+  const [avatarComment, setAvatarComment] = useState('')
+  const [isSubmittingAvatarComment, setIsSubmittingAvatarComment] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [isEditingBio, setIsEditingBio] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -119,6 +122,10 @@ export function ProfilePage() {
 
   const activeUserId = userId ?? authUser?.id ?? ''
   const isOwnProfile = !userId || userId === authUser?.id
+  const activeAvatarPost = useMemo(
+    () => posts.find((post) => post.type === 'avatar_update') ?? null,
+    [posts],
+  )
 
   useFeedSocket({
     onNewPost: (post) => {
@@ -305,6 +312,24 @@ export function ProfilePage() {
       resetAvatarForm({ caption: result.payload.avatarCaption ?? '' })
     }
   })
+
+  const onSubmitAvatarComment = async () => {
+    if (!activeAvatarPost || !avatarComment.trim()) {
+      return
+    }
+
+    setIsSubmittingAvatarComment(true)
+
+    try {
+      const updatedPost = await feedService.addComment(activeAvatarPost.id, { content: avatarComment.trim() })
+      setPosts((currentPosts) => currentPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post)))
+      setAvatarComment('')
+    } catch (error) {
+      toast.error(feedService.getErrorMessage(error))
+    } finally {
+      setIsSubmittingAvatarComment(false)
+    }
+  }
 
   return (
     <>
@@ -525,6 +550,8 @@ export function ProfilePage() {
             </div>
           </Card>
 
+          {isOwnProfile ? <CreatePostCard /> : null}
+
           {isLoadingPosts ? (
             <FeedSkeleton />
           ) : posts.length > 0 ? (
@@ -570,6 +597,62 @@ export function ProfilePage() {
                 <p className="text-sm leading-7 text-muted-foreground">{profile.avatarCaption}</p>
               </div>
             ) : null}
+
+            <div className="space-y-3 rounded-[12px] border border-border/70 bg-background/70 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-foreground">Comments</p>
+                <span className="text-xs text-muted-foreground">
+                  {activeAvatarPost ? `${activeAvatarPost.commentCount} replies` : 'No activity yet'}
+                </span>
+              </div>
+
+              {activeAvatarPost ? (
+                <>
+                  <div className="space-y-3">
+                    {activeAvatarPost.comments.length > 0 ? (
+                      activeAvatarPost.comments.map((comment) => (
+                        <div key={comment.id} className="rounded-[10px] bg-secondary/55 px-4 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-medium text-foreground">{comment.author.name}</p>
+                            <span className="text-xs text-muted-foreground">{formatRelativeDate(comment.createdAt)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-foreground">{comment.content}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No comments yet. Start the conversation.</p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Input
+                      value={avatarComment}
+                      onChange={(event) => setAvatarComment(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          void onSubmitAvatarComment()
+                        }
+                      }}
+                      className="h-11"
+                      placeholder="Write a comment on this profile picture..."
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      disabled={isSubmittingAvatarComment || !avatarComment.trim()}
+                      onClick={() => void onSubmitAvatarComment()}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Comments will appear here once this profile picture has a shared activity post.
+                </p>
+              )}
+            </div>
           </div>
 
           <DialogFooter>
