@@ -1,6 +1,7 @@
 import { Bell, Home, MessageCircle, Search, UserCircle2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { MessagePanel } from '@/components/messages/message-panel'
 import { NotificationPanel } from '@/components/notifications/notification-panel'
 import { Avatar } from '@/components/shared/avatar'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
@@ -214,6 +215,22 @@ export function MainLayout() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[24rem] p-0">
                   <NotificationPanel />
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
+                    <MessageCircle className="h-4 w-4" />
+                    {messageUnreadCount > 0 ? (
+                      <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-center text-[10px] font-semibold text-primary-foreground">
+                        {messageUnreadCount > 9 ? '9+' : messageUnreadCount}
+                      </span>
+                    ) : null}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[24rem] p-0">
+                  <MessagePanel />
                 </DropdownMenuContent>
               </DropdownMenu>
 
