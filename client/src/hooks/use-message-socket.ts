@@ -1,8 +1,16 @@
 import { useEffect } from 'react'
-import { receiveMessage, typingStarted, typingStopped, updateMessageStatus } from '@/features/message/message-slice'
+import {
+  clearConversationUnread,
+  receiveMessage,
+  typingStarted,
+  typingStopped,
+  updateMessageStatus,
+  upsertConversation,
+} from '@/features/message/message-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
+import { useAppSelector } from '@/hooks/use-app-selector'
 import { getSocket } from '@/services/socket-service'
-import type { ChatMessage } from '@/types/message'
+import type { ChatMessage, ConversationSummary } from '@/types/message'
 
 interface TypingStartPayload {
   conversationId: string
@@ -26,6 +34,7 @@ interface MessageStatusPayload {
 
 export function useMessageSocket() {
   const dispatch = useAppDispatch()
+  const activeConversationId = useAppSelector((state) => state.message.activeConversationId)
 
   useEffect(() => {
     const socket = getSocket()
@@ -46,16 +55,25 @@ export function useMessageSocket() {
       dispatch(updateMessageStatus(payload))
     }
 
+    const handleConversationUpdated = (conversation: ConversationSummary) => {
+      dispatch(upsertConversation(conversation))
+      if (conversation.id === activeConversationId && conversation.unreadCount > 0) {
+        dispatch(clearConversationUnread(conversation.id))
+      }
+    }
+
     socket.on('message:new', handleMessage)
     socket.on('typing:start', handleStartTyping)
     socket.on('typing:stop', handleStopTyping)
     socket.on('message:status', handleStatus)
+    socket.on('conversation:updated', handleConversationUpdated)
 
     return () => {
       socket.off('message:new', handleMessage)
       socket.off('typing:start', handleStartTyping)
       socket.off('typing:stop', handleStopTyping)
       socket.off('message:status', handleStatus)
+      socket.off('conversation:updated', handleConversationUpdated)
     }
-  }, [dispatch])
+  }, [activeConversationId, dispatch])
 }

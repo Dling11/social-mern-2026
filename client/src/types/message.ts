@@ -5,6 +5,7 @@ export interface ConversationSummary {
   participants: AuthUser[]
   lastMessageText?: string | null
   lastMessageAt?: string | null
+  unreadCount: number
 }
 
 export interface ChatMessage {

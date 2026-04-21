@@ -137,7 +137,11 @@ export const postService = {
     }
 
     const mappedPost = mapPost(populatedPost, user.id)
-    getIo().emit('feed:post:updated', mappedPost)
+    getIo().emit('feed:post:updated', {
+      post: mappedPost,
+      actorId: user.id,
+      mutation: 'like',
+    })
     return mappedPost
   },
 
@@ -174,7 +178,11 @@ export const postService = {
     }
 
     const mappedPost = mapPost(populatedPost, user.id)
-    getIo().emit('feed:post:updated', mappedPost)
+    getIo().emit('feed:post:updated', {
+      post: mappedPost,
+      actorId: user.id,
+      mutation: 'comment',
+    })
     return mappedPost
   },
 }

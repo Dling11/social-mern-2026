@@ -22,9 +22,11 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { logout } from '@/features/auth/auth-slice'
 import { fetchFriendLists } from '@/features/friend/friend-slice'
+import { fetchConversations } from '@/features/message/message-slice'
 import { fetchNotifications } from '@/features/notification/notification-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
+import { useMessageSocket } from '@/hooks/use-message-socket'
 import { useNotificationSocket } from '@/hooks/use-notification-socket'
 import { userService } from '@/services/user-service'
 import type { AuthUser } from '@/types/auth'
@@ -43,6 +45,9 @@ export function MainLayout() {
   const navigate = useNavigate()
   const user = useAppSelector((state) => state.auth.user)
   const { friends, receivedRequests } = useAppSelector((state) => state.friend)
+  const messageUnreadCount = useAppSelector((state) =>
+    state.message.conversations.reduce((total, conversation) => total + conversation.unreadCount, 0),
+  )
   const unreadCount = useAppSelector((state) => state.notification.items.filter((item) => !item.isRead).length)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<AuthUser[]>([])
@@ -50,9 +55,11 @@ export function MainLayout() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   useNotificationSocket()
+  useMessageSocket()
 
   useEffect(() => {
     void dispatch(fetchFriendLists())
+    void dispatch(fetchConversations())
     void dispatch(fetchNotifications())
   }, [dispatch])
 
@@ -237,15 +244,16 @@ export function MainLayout() {
                     to={item.to}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all',
+                        'flex items-center gap-3 rounded-[10px] px-4 py-3 text-sm font-medium transition-all',
                         isActive
-                          ? 'bg-primary text-primary-foreground shadow-[0_12px_30px_rgba(37,99,235,0.24)]'
+                          ? 'border border-primary/20 bg-primary/12 text-primary shadow-sm'
                           : 'text-foreground hover:bg-accent hover:text-accent-foreground',
                       )
                     }
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
+                    {item.label === 'Messages' && messageUnreadCount > 0 ? <Badge className="ml-auto">{messageUnreadCount}</Badge> : null}
                     {item.label === 'Notifications' && unreadCount > 0 ? <Badge className="ml-auto">{unreadCount}</Badge> : null}
                   </NavLink>
                 ))}

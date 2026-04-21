@@ -12,7 +12,6 @@ import { fetchFriendLists } from '@/features/friend/friend-slice'
 import { fetchConversations, fetchMessages, openConversation, sendMessage, setActiveConversation } from '@/features/message/message-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
 import { useAppSelector } from '@/hooks/use-app-selector'
-import { useMessageSocket } from '@/hooks/use-message-socket'
 import { messageService } from '@/services/message-service'
 import { getSocket } from '@/services/socket-service'
 import type { AuthUser } from '@/types/auth'
@@ -35,8 +34,6 @@ export function MessagesPage() {
   const [text, setText] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const [conversationSearch, setConversationSearch] = useState('')
-
-  useMessageSocket()
 
   useEffect(() => {
     void dispatch(fetchConversations())

@@ -15,12 +15,7 @@ export const messageService = {
       .populate('participants', 'name email avatarUrl')
       .sort({ lastMessageAt: -1, updatedAt: -1 })
 
-    return conversations.map((conversation: any) => ({
-      id: conversation.id,
-      participants: conversation.participants.map(mapUser),
-      lastMessageText: conversation.lastMessageText ?? null,
-      lastMessageAt: conversation.lastMessageAt ? conversation.lastMessageAt.toISOString() : null,
-    }))
+    return Promise.all(conversations.map((conversation: any) => mapConversationSummary(conversation, userId)))
   },
 
   async openConversation(user: AuthenticatedUser, otherUserId: string) {
@@ -54,12 +49,7 @@ export const messageService = {
       throw new ApiError(500, 'Unable to open conversation.')
     }
 
-    return {
-      id: conversation.id,
-      participants: (conversation as any).participants.map(mapUser),
-      lastMessageText: conversation.lastMessageText ?? null,
-      lastMessageAt: conversation.lastMessageAt ? conversation.lastMessageAt.toISOString() : null,
-    } satisfies ConversationSummary
+    return mapConversationSummary(conversation as any, user.id)
   },
 
   async getMessages(userId: string, conversationId: string): Promise<ChatMessage[]> {
@@ -111,6 +101,7 @@ export const messageService = {
     const mapped = mapMessage(populatedMessage as any)
     const io = getIo()
     io.to(`conversation:${conversation.id}`).emit('message:new', mapped)
+    await emitConversationUpdates(conversation.id, conversation.participants.map((id) => id.toString()))
 
     if (otherParticipantId) {
       await notificationService.create({
@@ -153,6 +144,11 @@ export const messageService = {
         seenAt: new Date().toISOString(),
       })
     })
+
+    const updatedConversation = await getConversationSummaryForUser(conversationId, userId)
+    if (updatedConversation) {
+      io.to(`user:${userId}`).emit('conversation:updated', updatedConversation)
+    }
   },
 }
 
@@ -190,4 +186,45 @@ function mapMessage(message: any): ChatMessage {
     seenAt: message.seenAt ? message.seenAt.toISOString() : null,
     createdAt: message.createdAt.toISOString(),
   }
+}
+
+async function mapConversationSummary(conversation: any, userId: string): Promise<ConversationSummary> {
+  const unreadCount = await MessageModel.countDocuments({
+    conversation: conversation._id,
+    sender: { $ne: new Types.ObjectId(userId) },
+    status: { $ne: 'seen' },
+  })
+
+  return {
+    id: conversation.id,
+    participants: conversation.participants.map(mapUser),
+    lastMessageText: conversation.lastMessageText ?? null,
+    lastMessageAt: conversation.lastMessageAt ? conversation.lastMessageAt.toISOString() : null,
+    unreadCount,
+  }
+}
+
+async function getConversationSummaryForUser(conversationId: string, userId: string) {
+  const conversation = await ConversationModel.findById(conversationId).populate('participants', 'name email avatarUrl')
+  if (!conversation) {
+    return null
+  }
+
+  return mapConversationSummary(conversation as any, userId)
+}
+
+async function emitConversationUpdates(conversationId: string, participantIds: string[]) {
+  const io = getIo()
+  const uniqueParticipantIds = [...new Set(participantIds)]
+
+  await Promise.all(
+    uniqueParticipantIds.map(async (participantId) => {
+      const summary = await getConversationSummaryForUser(conversationId, participantId)
+      if (!summary) {
+        return
+      }
+
+      io.to(`user:${participantId}`).emit('conversation:updated', summary)
+    }),
+  )
 }

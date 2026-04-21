@@ -21,6 +21,12 @@ export interface FeedPost {
   comments: FeedComment[]
 }
 
+export interface FeedPostRealtimeUpdate {
+  post: FeedPost
+  actorId: string
+  mutation: 'like' | 'comment'
+}
+
 export interface FeedResponse {
   posts: FeedPost[]
 }

@@ -16,4 +16,5 @@ export interface ConversationSummary {
   participants: AuthenticatedUser[]
   lastMessageText?: string | null
   lastMessageAt?: string | null
+  unreadCount: number
 }

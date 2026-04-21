@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { replaceFeedPost, upsertFeedPost } from '@/features/feed/feed-slice'
 import { useAppDispatch } from '@/hooks/use-app-dispatch'
+import { useAppSelector } from '@/hooks/use-app-selector'
 import { getSocket } from '@/services/socket-service'
-import type { FeedPost } from '@/types/post'
+import type { FeedPost, FeedPostRealtimeUpdate } from '@/types/post'
 
 interface UseFeedSocketOptions {
   onNewPost?: (post: FeedPost) => void
@@ -11,7 +12,14 @@ interface UseFeedSocketOptions {
 
 export function useFeedSocket(options: UseFeedSocketOptions = {}) {
   const dispatch = useAppDispatch()
+  const authUserId = useAppSelector((state) => state.auth.user?.id ?? null)
+  const feedPosts = useAppSelector((state) => state.feed.posts)
   const { onNewPost, onUpdatedPost } = options
+  const feedPostsRef = useRef(feedPosts)
+
+  useEffect(() => {
+    feedPostsRef.current = feedPosts
+  }, [feedPosts])
 
   useEffect(() => {
     const socket = getSocket()
@@ -21,9 +29,19 @@ export function useFeedSocket(options: UseFeedSocketOptions = {}) {
       onNewPost?.(post)
     }
 
-    const handleUpdatedPost = (post: FeedPost) => {
-      dispatch(replaceFeedPost(post))
-      onUpdatedPost?.(post)
+    const handleUpdatedPost = (payload: FeedPostRealtimeUpdate) => {
+      const existingPost = feedPostsRef.current.find((post) => post.id === payload.post.id)
+
+      const mergedPost =
+        existingPost && payload.actorId !== authUserId
+          ? {
+              ...payload.post,
+              isLiked: existingPost.isLiked,
+            }
+          : payload.post
+
+      dispatch(replaceFeedPost(mergedPost))
+      onUpdatedPost?.(mergedPost)
     }
 
     socket.on('feed:post:new', handleNewPost)
@@ -33,5 +51,5 @@ export function useFeedSocket(options: UseFeedSocketOptions = {}) {
       socket.off('feed:post:new', handleNewPost)
       socket.off('feed:post:updated', handleUpdatedPost)
     }
-  }, [dispatch, onNewPost, onUpdatedPost])
+  }, [authUserId, dispatch, onNewPost, onUpdatedPost])
 }
